@@ -1,0 +1,390 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:local="clr-namespace:Droppy"
+                    xmlns:data="clr-namespace:Droppy.Data">
+
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="Skins/Default/GarbageCanIcon.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+    
+    <!-- ==================== Icon Drawing: FolderIcon1 ============================-->
+    <DrawingImage x:Key="FolderIcon1">
+        <DrawingImage.Drawing>
+            <DrawingGroup>
+                <GeometryDrawing Geometry="F1 M 225.778,294.037L 231.388,294.037C 231.689,294.071 233.406,295.543 233.793,296.203L 233.85,296.321L 257.492,296.338C 258.44,296.338 259.209,297.247 259.209,298.369L 259.209,320.851C 259.209,321.973 258.44,322.882 257.492,322.882L 225.779,322.882C 224.83,322.882 224.061,321.973 224.061,320.851L 224.061,300.535L 224.061,298.369L 224.061,296.068C 224.061,294.946 224.83,294.037 225.778,294.037 Z ">
+                    <GeometryDrawing.Pen>
+                        <Pen Thickness="1" LineJoin="Round" Brush="#FF857E23"/>
+                    </GeometryDrawing.Pen>
+                    <GeometryDrawing.Brush>
+                        <LinearGradientBrush StartPoint="0,1" EndPoint="0,0">
+                            <LinearGradientBrush.GradientStops>
+                                <GradientStop Color="#FF7D7E25" Offset="0"/>
+                                <GradientStop Color="#FFB7B841" Offset="0.5"/>
+                                <GradientStop Color="#FFF2F35E" Offset="1"/>
+                            </LinearGradientBrush.GradientStops>
+                        </LinearGradientBrush>
+                    </GeometryDrawing.Brush>
+                </GeometryDrawing>
+                <GeometryDrawing Geometry="F1 M 224.176,297.466L 259.092,297.444L 259.092,302.408L 224.176,302.43L 224.176,297.466 Z ">
+                    <GeometryDrawing.Brush>
+                        <LinearGradientBrush StartPoint="0.503859,1.00912" EndPoint="0.503859,0.0045165">
+                            <LinearGradientBrush.GradientStops>
+                                <GradientStop Color="#98000000" Offset="0"/>
+                                <GradientStop Color="#4C70706C" Offset="0.38785"/>
+                                <GradientStop Color="#00E0E0D9" Offset="1"/>
+                            </LinearGradientBrush.GradientStops>
+                        </LinearGradientBrush>
+                    </GeometryDrawing.Brush>
+                </GeometryDrawing>
+                <GeometryDrawing Geometry="F1 M 223.333,302.295L 259.899,302.295C 260.847,302.295 261.616,303.204 261.616,304.326L 259.381,320.932C 259.381,322.054 258.612,322.963 257.663,322.963L 225.607,322.963C 224.658,322.963 223.889,322.054 223.889,320.932L 221.616,304.326C 221.616,303.204 222.385,302.295 223.333,302.295 Z ">
+                    <GeometryDrawing.Pen>
+                        <Pen Thickness="1" LineJoin="Round" Brush="#FF857E23"/>
+                    </GeometryDrawing.Pen>
+                    <GeometryDrawing.Brush>
+                        <LinearGradientBrush StartPoint="0,1" EndPoint="0,0">
+                            <LinearGradientBrush.GradientStops>
+                                <GradientStop Color="#FF7D7E25" Offset="0"/>
+                                <GradientStop Color="#FFB7B841" Offset="0.5"/>
+                                <GradientStop Color="#FFF2F35E" Offset="1"/>
+                            </LinearGradientBrush.GradientStops>
+                        </LinearGradientBrush>
+                    </GeometryDrawing.Brush>
+                </GeometryDrawing>
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
+
+    <!-- ==================== Icon Drawing: AddIcon1 ============================-->
+    <DrawingImage x:Key="AddIcon1">
+        <DrawingImage.Drawing>
+            <GeometryDrawing Brush="#FFD4D4D4" Geometry="F1 M 238.667,484.307L 238.667,475.773L 230.133,475.773L 230.133,472.36L 238.667,472.36L 238.667,463.827L 242.08,463.827L 242.08,472.36L 250.613,472.36L 250.613,475.773L 242.08,475.773L 242.08,484.307L 238.667,484.307 Z "/>
+        </DrawingImage.Drawing>
+    </DrawingImage>
+
+
+    <local:WidgetSiteContentConverter x:Key="widgetSiteContentConverter"/>
+    
+    <LinearGradientBrush x:Key="MainWindowBackground" StartPoint="0,1" EndPoint="0,0">
+        <LinearGradientBrush.GradientStops>
+            <GradientStop Color="#FF1F5293" Offset="0"/>
+            <GradientStop Color="#FF72ACCA" Offset="0.5"/>
+            <GradientStop Color="#FF1F5293" Offset="1"/>
+        </LinearGradientBrush.GradientStops>
+    </LinearGradientBrush>
+
+    <LinearGradientBrush x:Key="MainWindowTitleBarBrush" StartPoint="0,1" EndPoint="0,0">
+        <LinearGradientBrush.GradientStops>
+            <GradientStop Color="#FF72ACCA" Offset="0"/>
+            <GradientStop Color="#380A19CE" Offset="1"/>
+        </LinearGradientBrush.GradientStops>
+    </LinearGradientBrush>
+
+
+    <!-- ================ ResizeBarControl Definition ======================-->
+    <Style TargetType="{x:Type local:ResizeBarControl}">
+        <Setter Property="MinWidth" Value="24"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type local:ResizeBarControl}">
+                    <ControlTemplate.Resources>
+                        <LinearGradientBrush x:Key="ThumbBrush" StartPoint="0,1" EndPoint="0,0">
+                            <LinearGradientBrush.GradientStops>
+                                <GradientStop Color="#FF5287FF" Offset="0"/>
+                                <GradientStop Color="#FFB3DCFF" Offset="1"/>
+                            </LinearGradientBrush.GradientStops>
+                        </LinearGradientBrush>
+                        
+                        <DrawingBrush x:Key="LeftThumbBrush">
+                            <DrawingBrush.Drawing>
+                                <DrawingGroup>
+                                    <GeometryDrawing Brush="{StaticResource ThumbBrush}"
+                                                     Geometry="M0,0 h3 v3 h-3 Z M5,0 h6 v3 h-6 Z"/>
+                                    <GeometryDrawing Brush="{StaticResource ThumbBrush}"
+                                                     Geometry="M0,5 h3 v3 h-3 Z M5,5 h3 v3 h-3 Z M10,5 h1 v3 h-1 Z"/>
+                                </DrawingGroup>
+                            </DrawingBrush.Drawing>
+                        </DrawingBrush>
+
+                        <DrawingBrush x:Key="CenterThumbBrush">
+                            <DrawingBrush.Drawing>
+                                <DrawingGroup>
+                                    <GeometryDrawing Brush="{StaticResource ThumbBrush}"
+                                                     Geometry="M0,0 h3 v3 h-3 Z"/>
+                                    <GeometryDrawing Brush="{StaticResource ThumbBrush}"
+                                                     Geometry="M0,5 h3 v3 h-3 Z"/>
+                                </DrawingGroup>
+                            </DrawingBrush.Drawing>
+                        </DrawingBrush>
+
+                        <DrawingBrush x:Key="RightThumbBrush">
+                            <DrawingBrush.Drawing>
+                                <DrawingGroup>
+                                    <GeometryDrawing Brush="{StaticResource ThumbBrush}"
+                                                     Geometry="M0,0 h6 v3 h-6 Z M8,0 h3 v3 h-3 Z"/>
+                                    <GeometryDrawing Brush="{StaticResource ThumbBrush}"
+                                                     Geometry="M0,5 h1 v3 h-1 Z M3,5 h3 v3 h-3 Z M8,5 h3 v3 h-3 Z"/>
+                                </DrawingGroup>
+                            </DrawingBrush.Drawing>
+                        </DrawingBrush>
+                        
+                        <Style x:Key="LeftThumbStyle" TargetType="Thumb">
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="Thumb">
+                                        <Border Padding="4,0,0,4" Background="Transparent">
+                                            <Border Height="8" Width="11" Background="{StaticResource LeftThumbBrush}"/>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+
+                        <Style x:Key="CenterThumbStyle" TargetType="Thumb">
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="Thumb">
+                                        <Border Padding="0,0,0,4" Background="Transparent">
+                                            <Border Height="8" Background="{StaticResource CenterThumbBrush}"/>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+
+                        <Style x:Key="RightThumbStyle" TargetType="Thumb">
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="Thumb">
+                                        <Border Padding="0,0,4,4" Background="Transparent">
+                                            <Border Height="8" Width="11" Background="{StaticResource RightThumbBrush}"/>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+
+                    </ControlTemplate.Resources>
+                    
+                    <DockPanel>
+                        <Thumb Name="PART_LeftThumb" DockPanel.Dock="Left" Style="{StaticResource LeftThumbStyle}" Cursor="SizeNESW"/>
+                        <Thumb Name="PART_RightThumb" DockPanel.Dock="Right" Style="{StaticResource RightThumbStyle}" Cursor="SizeNWSE"/>
+                        <Thumb Name="PART_CenterThumb" Style="{StaticResource CenterThumbStyle}" Cursor="SizeNS"/>
+                    </DockPanel>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    
+    <!-- ================ WidgetSiteControl Definition ======================-->
+    <Style TargetType="{x:Type local:WidgetSiteControl}">
+        <Setter Property="Width" Value="160"/>
+        <Setter Property="Height" Value="40"/>
+        <Setter Property="Margin" Value="6,2"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type local:WidgetSiteControl}">
+                    <ControlTemplate.Resources>
+                        <DataTemplate DataType="{x:Type data:FolderWidgetData}">
+                            <local:FolderWidgetControl/>
+                        </DataTemplate>
+                        
+                        <DataTemplate DataType="{x:Type local:EmptySiteClass}">
+                            <local:EmptyWidgetControl/>
+                        </DataTemplate>
+                    </ControlTemplate.Resources>
+                    <Border Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}">
+                        <ContentPresenter Content="{Binding Path=Content,
+                                                            RelativeSource={RelativeSource Mode=TemplatedParent},
+                                                            Converter={StaticResource widgetSiteContentConverter}}" />
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+
+    <!-- ================ EmptyWidgetControl Definition ======================-->
+    <Style TargetType="{x:Type local:EmptyWidgetControl}">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type local:EmptyWidgetControl}">
+                    <ControlTemplate.Resources>
+                        <LinearGradientBrush x:Key="BackgroundBrush" StartPoint="0,1" EndPoint="0,0">
+                            <LinearGradientBrush.GradientStops>
+                                <GradientStop Color="#FF8A8C91" Offset="0"/>
+                                <GradientStop Color="#FF646879" Offset="0.25"/>
+                                <GradientStop Color="#FF3F4462" Offset="0.5"/>
+                                <GradientStop Color="#FF4A4F6F" Offset="0.75"/>
+                                <GradientStop Color="#FF555A7C" Offset="1"/>
+                            </LinearGradientBrush.GradientStops>
+                        </LinearGradientBrush>
+                        
+                        <LinearGradientBrush x:Key="VerticalShadowsBrush" StartPoint="0,0" EndPoint="1,0">
+                            <LinearGradientBrush.GradientStops>
+                                <GradientStop Color="#4D000000" Offset="0"/>
+                                <GradientStop Color="#003F4462" Offset="0.12"/>
+                                <GradientStop Color="#003E4462" Offset="0.88"/>
+                                <GradientStop Color="#4D000000" Offset="1"/>
+                            </LinearGradientBrush.GradientStops>
+                        </LinearGradientBrush>
+
+                        <LinearGradientBrush x:Key="HorizontalShadowsBrush" StartPoint="0,1" EndPoint="0,0">
+                            <LinearGradientBrush.GradientStops>
+                                <GradientStop Color="#73000000" Offset="0"/>
+                                <GradientStop Color="#003F4462" Offset="0.12"/>
+                                <GradientStop Color="#003E4462" Offset="0.88"/>
+                                <GradientStop Color="#4D000000" Offset="1"/>
+                            </LinearGradientBrush.GradientStops>
+                        </LinearGradientBrush>
+                        
+                    </ControlTemplate.Resources>
+                    
+                    <Border Background="{StaticResource BackgroundBrush}" CornerRadius="8" AllowDrop="True">
+                        <Grid>
+                            <Rectangle Fill="{StaticResource VerticalShadowsBrush}" RadiusX="8" RadiusY="8"/>
+                            <Rectangle Fill="{StaticResource HorizontalShadowsBrush}" RadiusX="8" RadiusY="8"/>
+                            <DockPanel Margin="8">
+                                <Image Width="40" Source="{StaticResource AddIcon1}" Stretch="None" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                <TextBlock Foreground="#FFD4D4D4" FontSize="14" Text="Add Item..." VerticalAlignment="Center"
+                                           HorizontalAlignment="Left" Margin="4,0,0,0"/>
+                            </DockPanel>
+                        </Grid>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+
+    <Style x:Key="StandardWidgetButton" TargetType="Button">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <ControlTemplate.Resources>
+                        <LinearGradientBrush x:Key="InnerBorderBrush" StartPoint="0,1" EndPoint="0,0">
+                            <LinearGradientBrush.GradientStops>
+                                <GradientStop Color="#FF999999" Offset="0"/>
+                                <GradientStop Color="#FFFFFFFF" Offset="0.5"/>
+                                <GradientStop Color="#FF999999" Offset="1"/>
+                            </LinearGradientBrush.GradientStops>
+                        </LinearGradientBrush>
+
+                        <LinearGradientBrush x:Key="OutterBorderBrush" StartPoint="0,1" EndPoint="0,0">
+                            <LinearGradientBrush.GradientStops>
+                                <GradientStop Color="#FF0C3F9E" Offset="0"/>
+                                <GradientStop Color="#FF839BC6" Offset="0.5"/>
+                                <GradientStop Color="#FF0D42A3" Offset="1"/>
+                            </LinearGradientBrush.GradientStops>
+                        </LinearGradientBrush>
+
+                        <LinearGradientBrush x:Key="BackgroundBrush" StartPoint="0,1" EndPoint="0,0">
+                            <LinearGradientBrush.GradientStops>
+                                <GradientStop Color="#FF485EDC" Offset="0"/>
+                                <GradientStop Color="#FF101E6E" Offset="0.5"/>
+                                <GradientStop Color="#FFB0B6D8" Offset="1"/>
+                            </LinearGradientBrush.GradientStops>
+                        </LinearGradientBrush>
+                        
+                        <LinearGradientBrush x:Key="HighlightBrush" StartPoint="0,1" EndPoint="0,0">
+                            <GradientStop Color="#32FFFFFF" Offset="0"/>
+                            <GradientStop Color="#18FFFFFF" Offset="0.5"/>
+                            <GradientStop Color="#34FFFFFF" Offset="1"/>
+                        </LinearGradientBrush>
+
+                        <LinearGradientBrush x:Key="PressedBackgroundBrush" StartPoint="0,1" EndPoint="0,0">
+                            <GradientStop Color="#FF47559D" Offset="0"/>
+                            <GradientStop Color="#FF263797" Offset="0.362069"/>
+                            <GradientStop Color="#FF263797" Offset="0.685345"/>
+                            <GradientStop Color="#FF4157D6" Offset="1"/>
+                        </LinearGradientBrush>
+
+                    </ControlTemplate.Resources>
+
+                    <Grid>
+                        <Border Name="Bd" CornerRadius="8" Background="{StaticResource BackgroundBrush}"
+                                BorderBrush="{StaticResource OutterBorderBrush}" BorderThickness="3">
+                            <ContentPresenter Name="Presenter" Margin="{TemplateBinding Padding}" RecognizesAccessKey="True"/>
+                        </Border>
+                        <Border Name="Bd_Highlight" CornerRadius="8" Background="{StaticResource HighlightBrush}" Opacity="0"/>
+                        <Border CornerRadius="8" BorderThickness="1" BorderBrush="{StaticResource InnerBorderBrush}" Margin="1"/>
+                    </Grid>
+                    
+                    <ControlTemplate.Triggers>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="IsMouseOver" Value="True"/>
+                                <Condition Property="IsPressed" Value="False"/>
+                            </MultiTrigger.Conditions>
+                            <MultiTrigger.Setters>
+                                <Setter TargetName="Bd_Highlight" Property="Opacity" Value="1"/>
+                            </MultiTrigger.Setters>
+                        </MultiTrigger>
+                        
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="{StaticResource PressedBackgroundBrush}"/>
+                            <Setter TargetName="Presenter" Property="RenderTransform">
+                                <Setter.Value>
+                                    <TranslateTransform X="1" Y="1"/>
+                                </Setter.Value>
+                            </Setter>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    
+    <!-- ================ FolderWidgetControl Definition ======================-->
+    <Style TargetType="{x:Type local:FolderWidgetControl}">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type local:FolderWidgetControl}">
+                    <ControlTemplate.Resources>
+                        <LinearGradientBrush x:Key="InnerBorderBrush" StartPoint="0,1" EndPoint="0,0">
+                            <LinearGradientBrush.GradientStops>
+                                <GradientStop Color="#FF999999" Offset="0"/>
+                                <GradientStop Color="#FFFFFFFF" Offset="0.5"/>
+                                <GradientStop Color="#FF999999" Offset="1"/>
+                            </LinearGradientBrush.GradientStops>
+                        </LinearGradientBrush>
+
+                        <LinearGradientBrush x:Key="OutterBorderBrush" StartPoint="0,1" EndPoint="0,0">
+                            <LinearGradientBrush.GradientStops>
+                                <GradientStop Color="#FF0C3F9E" Offset="0"/>
+                                <GradientStop Color="#FF839BC6" Offset="0.5"/>
+                                <GradientStop Color="#FF0D42A3" Offset="1"/>
+                            </LinearGradientBrush.GradientStops>
+                        </LinearGradientBrush>
+
+                        <LinearGradientBrush x:Key="BackgroundBrush" StartPoint="0,1" EndPoint="0,0">
+                            <LinearGradientBrush.GradientStops>
+                                <GradientStop Color="#FF485EDC" Offset="0"/>
+                                <GradientStop Color="#FF101E6E" Offset="0.5"/>
+                                <GradientStop Color="#FFB0B6D8" Offset="1"/>
+                            </LinearGradientBrush.GradientStops>
+                        </LinearGradientBrush>
+
+                    </ControlTemplate.Resources>
+
+                    <Button Style="{StaticResource StandardWidgetButton}" Padding="6">
+                        <DockPanel>
+                            <Image Width="24" Source="{DynamicResource FolderIcon1}" DockPanel.Dock="Left"/>
+                            <local:FilePathTextBlock Margin="4,0,0,0" Foreground="white" FilePath="{Binding Path=Label}" VerticalAlignment="Center"/>
+                        </DockPanel>
+                    </Button>
+                    
+                    <!--<Grid>
+                        <Border CornerRadius="8" Background="{StaticResource BackgroundBrush}"
+                                BorderBrush="{StaticResource OutterBorderBrush}" BorderThickness="3">
+                        </Border>
+                        <Border CornerRadius="8" BorderThickness="1" BorderBrush="{StaticResource InnerBorderBrush}" Margin="1"/>
+                    </Grid>-->
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    
+</ResourceDictionary>

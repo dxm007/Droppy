@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Droppy", "Droppy.csproj", "{5DD1EF6E-4D19-4900-965E-820BC2E989F1}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{8B0C912C-6B22-42BC-AA8C-B89C6DE0AA78}"
+	ProjectSection(SolutionItems) = preProject
+		ToDo.txt = ToDo.txt
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SourceCodeControl) = preSolution
+		SccNumberOfProjects = 2
+		SccLocalPath0 = .
+		SccProjectUniqueName1 = Droppy.csproj
+		SccLocalPath1 = .
+	EndGlobalSection
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x86 = Debug|x86
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{5DD1EF6E-4D19-4900-965E-820BC2E989F1}.Debug|x86.ActiveCfg = Debug|x86
+		{5DD1EF6E-4D19-4900-965E-820BC2E989F1}.Debug|x86.Build.0 = Debug|x86
+		{5DD1EF6E-4D19-4900-965E-820BC2E989F1}.Release|x86.ActiveCfg = Release|x86
+		{5DD1EF6E-4D19-4900-965E-820BC2E989F1}.Release|x86.Build.0 = Release|x86
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

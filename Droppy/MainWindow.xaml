@@ -1,0 +1,45 @@
+﻿<Window x:Class="Droppy.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:Droppy"
+        Title="MainWindow" SizeToContent="WidthAndHeight" ResizeMode="NoResize"
+        WindowStartupLocation="CenterScreen" WindowStyle="None" Background="Transparent" AllowsTransparency="True">
+    <Border CornerRadius="8" Background="{DynamicResource MainWindowBackground}">
+        <DockPanel>
+            <Border Background="{DynamicResource MainWindowTitleBarBrush}" Height="28"
+                    DockPanel.Dock="Top" CornerRadius="8" Margin="0,0,0,5"/>
+            <local:ResizeBarControl DockPanel.Dock="Bottom" Margin="0,5,0,0"/>
+            <local:WidgetMatrix x:Name="widgetContainer" />
+
+            <Popup Name="TrashCanPopup" AllowsTransparency="True" Placement="Left">
+                <Popup.RenderTransform>
+                    <ScaleTransform ScaleX="1.0" ScaleY="1.0"/>
+                </Popup.RenderTransform>
+                <Border Padding="10">
+                    <Border Background="Transparent">
+                        <Rectangle Name="TrashIconRect" Width="40" Height="56" Fill="{DynamicResource GarbageCanIcon}" Margin="10" AllowDrop="True">
+                            <Rectangle.Style>
+                                <Style TargetType="Rectangle">
+                                    <Setter Property="Effect">
+                                        <Setter.Value>
+                                            <DropShadowEffect BlurRadius="20" Color="DarkBlue" ShadowDepth="3" Direction="225"/>
+                                        </Setter.Value>
+                                    </Setter>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding ElementName=TrashCanPopup, Path=(local:DropHelper.IsDragOver)}" Value="True">
+                                            <Setter Property="Effect">
+                                                <Setter.Value>
+                                                    <DropShadowEffect BlurRadius="30" Color="Blue" ShadowDepth="3" Direction="225"/>
+                                                </Setter.Value>
+                                            </Setter>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>                                
+                            </Rectangle.Style>
+                        </Rectangle>
+                    </Border>
+                </Border>
+            </Popup>
+        </DockPanel>
+    </Border>
+</Window>

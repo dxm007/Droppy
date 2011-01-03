@@ -1,0 +1,119 @@
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Data;
+using System.Windows.Documents;
+using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using System.Windows.Navigation;
+using System.Windows.Shapes;
+
+namespace Droppy
+{
+    /// <summary>
+    /// </summary>
+    public class EmptyWidgetControl : WidgetControl
+    {
+        static EmptyWidgetControl()
+        {
+            DefaultStyleKeyProperty.OverrideMetadata( typeof( EmptyWidgetControl ), new FrameworkPropertyMetadata( typeof( EmptyWidgetControl ) ) );
+        }
+
+        public EmptyWidgetControl()
+        {
+            new FileDropHelper( this, false ).Drop += OnDrop;
+        }
+
+        public override void OnApplyTemplate()
+        {
+            base.OnApplyTemplate();
+        }
+
+        private void OnDrop( object sender, FileDropEventArgs e )
+        {
+            var fileInfo = new FileInfo( e.Files[0] );
+
+            if( fileInfo == null ) return;
+
+            if( fileInfo.Attributes.HasFlag( FileAttributes.Directory ) )
+            {
+                Site.SetWidget( new Data.FolderWidgetData() { Path = e.Files[0] } );
+            }
+        }
+    }
+
+
+
+
+
+
+
+
+    public class FileDropEventArgs : EventArgs
+    {
+        public FileDropEventArgs( FrameworkElement source, string[] files ) : base()
+        {
+            _source = source;
+            _fileList = files;
+        }
+
+        public string[] Files { get { return _fileList; } }
+
+        public FrameworkElement Source { get { return _source; } }
+
+        private FrameworkElement    _source;
+        private string[]            _fileList;
+    }
+
+    public class FileDropHelper : DropHelper
+    {
+        public FileDropHelper( FrameworkElement parent, bool allowMultiple )
+                    : base( parent )
+        {
+            _allowMultipleFiles = allowMultiple;
+        }
+
+        public event EventHandler< FileDropEventArgs >  Drop;
+
+        protected override void OnTargetDrop(object sender, DragEventArgs e)
+        {
+            string[] files = e.Data.GetData( "FileDrop" ) as string[];
+
+            if( files == null ) return;
+
+            if( Drop != null & files.Length > 0 )
+            {
+                Drop( this, new FileDropEventArgs( (FrameworkElement)Target, files ) );
+            }
+
+            e.Handled = true;
+        }
+
+        protected override void OnQueryDragDataValid( object sender, DragEventArgs eventData )
+        {
+            string[] files = eventData.Data.GetData( "FileDrop" ) as string[];
+
+            if( files == null ) return;
+
+            if( !_allowMultipleFiles && files.Length > 1 )
+            {
+                eventData.Effects = DragDropEffects.None;
+            }
+            else
+            {
+                eventData.Effects = eventData.KeyStates.HasFlag( DragDropKeyStates.ShiftKey ) ?
+                                                        DragDropEffects.Move : DragDropEffects.Copy ;
+            }
+
+            eventData.Handled = true;
+        }
+
+
+        private bool                _allowMultipleFiles;
+    }
+}
