@@ -1,12 +1,3 @@
-- cleanup DragHelper class and mouse capture.  Class needs to allow the client to specify whether or 
-  not there is a child control that captures the mouse, if there is one, then it shouldn't do any
-  capture.
-- Fix shading of pressed state of folder button
-- make "Add Item..." a button
-- launch windows explorer when a folder is clicked
-- copy files into the folder when they are dragged onto a folder site
-- ability to size the window
-- move folders by dragging when there are multiple columns
 - header bar needs controls:
 	- close button
 	- minimize button
@@ -19,15 +10,32 @@
 - ability to minimize the window (animate between minimum and normal size)
 - ability to hide the window (add hot key to bring it back)
 - when a second instance is launched, it should make the first one appear and exit
+- see if context menu can be custom drawn instead of windows standard one
 - add a context menu, allow users to copy/move files via the context menu "Paste" command
+- folder should have a tool tip which displays full path when mouse is hovering over
 - create an icon for the application
+- implement container widgets which bring up a popup with child widget matrix control
 - implement profiles. Each profile defines set of folders/files to show in the UI.  User should
   be able to define multiple profiles and easily switch between them.
-  
+- investigate if we can replace dragged adorner with a custom cursor that includes the image
+  of the widget being dragged
 
 
 
 Completed:
+- animate the buttons that are created/destroyed during resize
+- there's a bug in calculating minimum window size so that widgets wouldn't get deleted
+- move folders by dragging when there are multiple columns
+- ability to size the window
+	- widget matrix and site controls need to support columns which start with non-zero index
+	- window should not allow to resize lower if that will result in data deletion
+- cleanup DragHelper class and mouse capture.  Class needs to allow the client to specify whether or 
+  not there is a child control that captures the mouse, if there is one, then it shouldn't do any
+  capture.
+- copy files into the folder when they are dragged onto a folder site
+- launch windows explorer when a folder is clicked
+- Fix shading of pressed state of folder button
+- make "Add Item..." a button
 - implement export/import to xml
 - persist application settings
 - clear folders from sites
@@ -42,17 +50,5 @@ Completed:
 
 
 
-Notes:
-
-Button template must respond to ....
-IsMouseOver
-IsPressed
-IsDefaulted
-IsKeyboardFocused
-ToggleButton.IsChecked
-IsEnabled
-
-widget grid buttons only need to respond to ...
-IsMouseOver
-IsPressed
-
+DragContext:
+16 bytes, all zeros except for byte 04 which is a 1

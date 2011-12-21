@@ -40,13 +40,11 @@ namespace Droppy
         public int Columns
         {
             get { return _controlData.Columns; }
-            set { Resize( Rows, value ); }
         }
 
         public int Rows
         {
             get { return _controlData.Rows; }
-            set { Resize( value, Columns ); }
         }
 
         public Data.WidgetContainerData Source
@@ -55,17 +53,27 @@ namespace Droppy
             set { if( _controlData.Source != value ) UpdateSource( value ); }
         }
 
-        public void Resize(int rows, int columns)
+        public void UpdateGrid( bool withAnimation )
         {
+            int firstRow, lastRow, firstColumn, lastColumn, rowCount, columnCount;
+            TimeSpan animationTime = new TimeSpan();
             int r, c;
+            List< WidgetSiteControl > sitesToRemove = new List<WidgetSiteControl>( 256 );
 
-            ResizeRowOrColumn( matrixPanel.RowDefinitions, rows );
-            ResizeRowOrColumn( matrixPanel.ColumnDefinitions, columns );
+            firstRow = _controlData.Source.FirstRow;
+            rowCount = _controlData.Source.RowCount;
+            lastRow = firstRow + rowCount;
+            firstColumn = _controlData.Source.FirstColumn;
+            columnCount = _controlData.Source.ColumnCount;
+            lastColumn = firstColumn + columnCount;
 
-            _controlData.Rows = rows;
-            _controlData.Columns = columns;
+            ResizeRowOrColumn( matrixPanel.RowDefinitions, rowCount );
+            ResizeRowOrColumn( matrixPanel.ColumnDefinitions, columnCount );
 
-            _controlData.SiteGrid = new WidgetSiteControl[ rows, columns];
+            _controlData.Rows = rowCount;
+            _controlData.Columns = columnCount;
+
+            _controlData.SiteGrid = new WidgetSiteControl[ rowCount, columnCount ];
 
             foreach( var child in matrixPanel.Children )
             {
@@ -73,42 +81,80 @@ namespace Droppy
 
                 if( site == null ) continue;
 
-                if( site.ContainerRow >= rows ||
-                    site.ContainerColumn >= columns )
+                if( site.ContainerRow >= lastRow || site.ContainerRow < firstRow ||
+                    site.ContainerColumn >= lastColumn || site.ContainerColumn < firstColumn )
                 {
-                    matrixPanel.Children.Remove( site );
+                    if( withAnimation )
+                    {
+                        TranslateTransform  transform = (TranslateTransform)( (TransformGroup)site.RenderTransform ).Children[1];
+
+                        transform.Y = ( site.ActualHeight + site.Margin.Height() ) *
+                                      ( site.ContainerRow >= lastRow ? ( site.ContainerRow - lastRow + 1 ) :
+                                        site.ContainerRow < firstRow ? ( site.ContainerRow - firstRow )    : 0.0 );
+                        transform.X = ( site.ActualWidth + site.Margin.Width() ) *
+                                      ( site.ContainerColumn >= lastColumn ? ( site.ContainerColumn - lastColumn + 1 ) :
+                                        site.ContainerColumn < firstColumn ? ( site.ContainerColumn - firstColumn )    : 0.0 );
+
+                        AnimateSiteScaleTransform( site, ref animationTime, 1, 0,
+                                                   new EventHandler( (o,e) => {
+                                                       matrixPanel.Children.Remove( site );
+                                                   } ) );
+                    }
+                    else
+                    {
+                        sitesToRemove.Add( site );
+                    }
                 }
                 else
                 {
-                    _controlData.SiteGrid[ site.ContainerRow, site.ContainerColumn ] = site;
+                    _controlData.SiteGrid[ site.ContainerRow - firstRow,
+                                           site.ContainerColumn - firstColumn ] = site;
                 }
             }
 
-            for( r = 0; r < rows; r++ )
+            foreach( var site in sitesToRemove )
             {
-                for( c = 0; c < columns; c++ )
+                matrixPanel.Children.Remove( site );
+            }
+
+            for( r = 0; r < rowCount; r++ )
+            {
+                for( c = 0; c < columnCount; c++ )
                 {
                     if( _controlData.SiteGrid[ r, c ] == null )
                     {
-                        InitWidgetSite( r, c );
+                        var site = InitWidgetSite( r, c, withAnimation, ref animationTime );
                     }
 
-                    _controlData.SiteGrid[ r, c ].Content = _controlData.Source[ r, c ];
+                    _controlData.SiteGrid[ r, c ].Content = _controlData.Source[ r + firstRow, c + firstColumn ];
                 }
             }
         }
 
-        private void InitWidgetSite( int row, int column )
+        private WidgetSiteControl InitWidgetSite( int row, int column, bool withAnimation, ref TimeSpan animationTime )
         {
             var site = new WidgetSiteControl();
+            var transform = new TransformGroup();
+
+            transform.Children.Add( withAnimation ? new ScaleTransform( 0, 0 ) : new ScaleTransform( 1, 1 ) );
+            transform.Children.Add( new TranslateTransform() );
 
             site.SetValue( Grid.RowProperty, row );
             site.SetValue( Grid.ColumnProperty, column );
-            site.RenderTransform = new TranslateTransform();
+            
+            site.RenderTransform = transform;
+            site.RenderTransformOrigin = new Point( 0.5, 0.5 );
+
+            if( withAnimation )
+            {
+                AnimateSiteScaleTransform( site, ref animationTime, 0, 1, null );
+            }
 
             matrixPanel.Children.Add( site );
 
             _controlData.SiteGrid[ row, column ] = site;
+
+            return site;
         }
 
         private void ResizeRowOrColumn<T>( IList<T> col,
@@ -135,20 +181,57 @@ namespace Droppy
             if( _controlData.Source != null )
             {
                 _controlData.Source.ContainerChanged -= OnWidgetContainerChanged;
+                _controlData.Source.ContainerResized -= OnWidgetContainerResized;
             }
 
             _controlData.Source = source;
 
             if( _controlData.Source != null )
             {
-                Resize( _controlData.Source.RowCount, _controlData.Source.ColumnCount );
-
                 _controlData.Source.ContainerChanged += OnWidgetContainerChanged;
+                _controlData.Source.ContainerResized += OnWidgetContainerResized;
+            }
+
+            UpdateGrid( false );
+        }
+
+        private void AnimateSiteScaleTransform( WidgetSiteControl site, ref TimeSpan beginTime, 
+                                                double fromScale, double toScale, EventHandler completedCallback )
+        {
+            ScaleTransform transform = (ScaleTransform)( (TransformGroup)site.RenderTransform ).Children[0];
+
+            if( fromScale == double.NaN )
+            {
+                transform.BeginAnimation( ScaleTransform.ScaleXProperty, null );
+                transform.BeginAnimation( ScaleTransform.ScaleYProperty, null );
             }
             else
             {
-                Resize( 0, 0 );
-            }
+                AnimationTimeline animation = BuildSiteScaleAnimation( beginTime, fromScale, toScale );
+
+                if( completedCallback != null )
+                {
+                    animation.Completed += completedCallback;
+                }
+
+                transform.BeginAnimation( ScaleTransform.ScaleXProperty, animation );
+                transform.BeginAnimation( ScaleTransform.ScaleYProperty,
+                                          BuildSiteScaleAnimation( beginTime, fromScale, toScale ) );
+
+                //beginTime += new TimeSpan( 500000 );
+            }            
+        }
+
+        private AnimationTimeline BuildSiteScaleAnimation( TimeSpan beginTime, double fromScale, double toScale )
+        {
+            var animation = new DoubleAnimation();
+
+            animation.BeginTime = beginTime;
+            animation.From = fromScale;
+            animation.To = toScale;
+            animation.Duration = new TimeSpan( 1500000 );
+            
+            return animation;
         }
 
         private void OnWidgetContainerChanged( object sender, Data.WidgetContainerChangedEventArgs e )
@@ -164,6 +247,11 @@ namespace Droppy
             }
         }
 
+        private void OnWidgetContainerResized( object sender, EventArgs e )
+        {
+            UpdateGrid( true );
+        }
+
 
         private WidgetMatrixData    _controlData;
     }
@@ -177,21 +265,22 @@ namespace Droppy
         {
             _parent = parent;
             _controlData = data;
-            _prevRelocatedSites = new List<WidgetSiteControl>();
+            _prevRelocatedSites = new List<SiteShiftInfo>();
         }
+
 
         protected override void OnQueryDragDataValid( object sender, DragEventArgs e )
         {
             base.OnQueryDragDataValid( sender, e );
 
-            PreprocessDataObject( e, UpdateMatrixUI );
+            ProcessDataObject( e, UpdateMatrixUI );
         }
 
         protected override void OnTargetDrop(object sender, DragEventArgs e)
         {
             base.OnTargetDrop( sender, e );
 
-            PreprocessDataObject( e, CommitMove );
+            ProcessDataObject( e, CommitMove );
         }
 
         protected override void OnRealTargetDragLeave(object sender, DragEventArgs e)
@@ -199,9 +288,10 @@ namespace Droppy
             CancelMove();
         }
 
+
         private delegate void ProcessDataObjectDelegate( int insertRow, int insertCol, WidgetSiteDragDropData data );
 
-        private void PreprocessDataObject( DragEventArgs eventArgs, ProcessDataObjectDelegate callback )
+        private void ProcessDataObject( DragEventArgs eventArgs, ProcessDataObjectDelegate callback )
         {
             WidgetSiteDragDropData data = eventArgs.Data.GetData( "Droppy.WidgetSiteDragDropData" ) as WidgetSiteDragDropData;
 
@@ -229,33 +319,58 @@ namespace Droppy
                 {
                     eventArgs.Effects = DragDropEffects.Move;
 
-                    callback( insertRow, insertColumn, data );
+                    callback( insertRow + _controlData.Source.FirstRow, insertColumn + _controlData.Source.FirstColumn, data );
                 }
             }
         }
 
+
+
+        class SiteShiftInfo
+        {
+            public WidgetSiteControl    site;
+            public Data.WidgetData      widget;
+            public double               translateX;
+            public double               translateY;
+            public int                  newRow;
+            public int                  newColumn;
+        }
+
+        class SiteShiftInfoComparer : IEqualityComparer< SiteShiftInfo >
+        {
+            public bool Equals( SiteShiftInfo x, SiteShiftInfo y )
+            {
+                return x.site == y.site;
+            }
+
+            public int GetHashCode( SiteShiftInfo obj )
+            {
+                return obj.site.GetHashCode();
+            }
+
+            public static IEqualityComparer< SiteShiftInfo > Comparer { get { return _comparer; } }
+
+            private static SiteShiftInfoComparer _comparer = new SiteShiftInfoComparer();
+        }
+
+
         private void UpdateMatrixUI( int insertRow, int insertCol, WidgetSiteDragDropData data )
         {
-            List< WidgetSiteControl >   relocatedSites;
-            double                      translateDistance = data.Site.ActualHeight + data.Site.Margin.Height();
-                
-            if( insertRow > data.Site.ContainerRow ) translateDistance = -translateDistance;
+            List< SiteShiftInfo >       relocatedSites;
 
             relocatedSites = GetShiftedSiteList( insertRow, insertCol, data );
 
-            var sitesToMove = relocatedSites.Except( _prevRelocatedSites ).ToList();
-            var sitesToReverse = _prevRelocatedSites.Except( relocatedSites ).ToList();
+            var sitesToMove = relocatedSites.Except( _prevRelocatedSites, SiteShiftInfoComparer.Comparer ).ToList();
+            var sitesToReverse = _prevRelocatedSites.Except( relocatedSites, SiteShiftInfoComparer.Comparer ).ToList();
 
-            foreach( var site in sitesToMove )
+            foreach( var s in sitesToMove )
             {
-                site.RenderTransform.BeginAnimation( TranslateTransform.YProperty, 
-                                                     BuildAnimation2( translateDistance ) );
+                AnimateSiteTranslate( s.site, s.translateX, s.translateY );
             }
 
-            foreach( var site in sitesToReverse )
+            foreach( var s in sitesToReverse )
             {
-                site.RenderTransform.BeginAnimation( TranslateTransform.YProperty, 
-                                                     BuildAnimation2( 0 )           );
+                AnimateSiteTranslate( s.site, 0.0, 0.0 );
             }
 
             _prevRelocatedSites = relocatedSites;
@@ -263,54 +378,80 @@ namespace Droppy
 
         private void CommitMove( int insertRow, int insertCol, WidgetSiteDragDropData data )
         {
-            List< WidgetSiteControl >   relocatedSites;
+            List< SiteShiftInfo >   relocatedSites;
 
             relocatedSites = GetShiftedSiteList( insertRow, insertCol, data );
 
             if( relocatedSites.Count > 0 )
             {
-                int shiftDirection = insertRow < data.Site.ContainerRow ? 1 : -1;
-
-                var sites = from a in relocatedSites
-                            select new { site = a,
-                                         pos = a.ContainerRow + shiftDirection,
-                                         widget = (Data.WidgetData)a.Content    };
-
-                var sitesList = sites.ToList();
-
-                foreach( var siteInfo in sitesList )
+                foreach( var s in relocatedSites )
                 {
-                    _controlData.Source[ siteInfo.pos, 0 ] = siteInfo.widget;
-                    siteInfo.site.RenderTransform.BeginAnimation( TranslateTransform.YProperty, null );
+                    _controlData.Source[ s.newRow, s.newColumn ] = s.widget;
+
+                    AnimateTranslate( s.site, TranslateTransform.XProperty, null );
+                    AnimateTranslate( s.site, TranslateTransform.YProperty, null );
                 }
 
                 _controlData.Source[ insertRow, insertCol ] = data.Widget;
             }
 
             // If there are any controls left out of original position, return them now.
-            _prevRelocatedSites = _prevRelocatedSites.Except( relocatedSites ).ToList();
+            _prevRelocatedSites = _prevRelocatedSites.Except( relocatedSites, SiteShiftInfoComparer.Comparer ).ToList();
+
             CancelMove();
         }
 
         private void CancelMove()
         {
-            foreach( var site in _prevRelocatedSites )
+            foreach( var s in _prevRelocatedSites )
             {
-                site.RenderTransform.BeginAnimation( TranslateTransform.YProperty, 
-                                                        BuildAnimation2( 0 )           );
+                AnimateSiteTranslate( s.site, 0, 0 );
             }
 
             _prevRelocatedSites.Clear();
         }
 
-        private List< WidgetSiteControl > GetShiftedSiteList( int insertRow, int insertCol, WidgetSiteDragDropData data )
+        private List< SiteShiftInfo > GetShiftedSiteList( int insertRow, int insertCol, WidgetSiteDragDropData data )
         {
             int                         sourceRow = data.Site.ContainerRow;
-            List< WidgetSiteControl >   relocatedSites = new List<WidgetSiteControl>( _controlData.Rows + _controlData.Columns );
+            int                         sourceCol = data.Site.ContainerColumn;
+            int                         firstCol = _controlData.Source.FirstColumn;
+            int                         firstRow = _controlData.Source.FirstRow;
+            List< SiteShiftInfo >       relocatedSites;
             int                         i, step;
+            double                      translateBy;
+
+            // preallocate enough so we don't need to worry about reallocations
+            relocatedSites = new List<SiteShiftInfo>( _controlData.Rows + _controlData.Columns + 10 );
+
+            if( insertCol != sourceCol )
+            {
+                translateBy = data.Site.ActualWidth + data.Site.Margin.Width();
+
+                if( insertCol < sourceCol )
+                {
+                    step = 1;
+                }
+                else
+                {
+                    step = -1;
+                    translateBy = -translateBy;
+                }
+
+                for( i = insertCol; i != sourceCol; i += step )
+                {
+                    WidgetSiteControl ctrl = _controlData.SiteGrid[ sourceRow - firstRow, i - firstCol ];
+
+                    relocatedSites.Add( new SiteShiftInfo() { site = ctrl, widget = (Data.WidgetData)ctrl.Content,
+                                                              translateX = translateBy, translateY = 0.0,
+                                                              newColumn = i + step, newRow = sourceRow             } );
+                }
+            }
 
             if( insertRow != sourceRow )
             {
+                translateBy = data.Site.ActualHeight + data.Site.Margin.Height();
+
                 if( insertRow < sourceRow )
                 {
                     step = 1;
@@ -318,18 +459,34 @@ namespace Droppy
                 else
                 {
                     step = -1;
+                    translateBy = -translateBy;
                 }
 
                 for( i = insertRow; i != sourceRow; i += step )
                 {
-                    relocatedSites.Add( _controlData.SiteGrid[ i, insertCol ] );
+                    WidgetSiteControl ctrl = _controlData.SiteGrid[ i - firstRow, insertCol - firstCol ];
+
+                    relocatedSites.Add( new SiteShiftInfo() { site = ctrl, widget = (Data.WidgetData)ctrl.Content,
+                                                              translateY = translateBy, translateX = 0.0,
+                                                              newColumn = insertCol, newRow = i + step             } );
                 }
             }
 
             return relocatedSites;
         }
 
-        private AnimationTimeline BuildAnimation2( double distance )
+        private void AnimateSiteTranslate( WidgetSiteControl site, double toX, double toY )
+        {
+            AnimateTranslate( site, TranslateTransform.XProperty, BuildAnimation( toX ) );
+            AnimateTranslate( site, TranslateTransform.YProperty, BuildAnimation( toY ) );
+        }
+
+        private void AnimateTranslate( WidgetSiteControl site, DependencyProperty property, AnimationTimeline animation )
+        {
+            ( (TransformGroup)site.RenderTransform ).Children[1].BeginAnimation( property, animation );
+        }
+
+        private AnimationTimeline BuildAnimation( double distance )
         {
             DoubleAnimationUsingKeyFrames animation = new DoubleAnimationUsingKeyFrames();
 
@@ -343,154 +500,10 @@ namespace Droppy
             return animation;
         }
 
-        private AnimationTimeline BuildAnimation( double distance )
-        {
-            DoubleAnimation animation = new DoubleAnimation();
-
-            animation.Duration = new TimeSpan( 2500000 );
-            animation.To = distance;
-            animation.FillBehavior = ( distance == 0.0 ? FillBehavior.Stop : FillBehavior.HoldEnd );
-
-            return animation;
-        }
 
         private WidgetMatrix                    _parent;
         private WidgetMatrixData                _controlData;
-        private List< WidgetSiteControl >       _prevRelocatedSites;
+        private List< SiteShiftInfo >           _prevRelocatedSites;
     }
 
-
-
-
-    public class DropHelperEventArgs : EventArgs
-    {
-        public DropHelperEventArgs( object originalSender, DragEventArgs eventArgs )
-        {
-            _sender = originalSender;
-            _eventArgs = eventArgs;
-        }
-
-        public object OriginalSender { get { return _sender; } }
-        public DragEventArgs EventArgs { get { return _eventArgs; } }
-
-        private object          _sender;
-        private DragEventArgs   _eventArgs;
-    }
-
-
-
-    public class DropHelper
-    {
-        public DropHelper( UIElement target )
-        {
-            _target = target;
-
-            _target.DragEnter += OnTargetDragEnter;
-            _target.DragLeave += OnTargetDragLeave;
-            _target.DragOver += OnTargetDragOver;
-            _target.Drop += OnTargetDrop;
-        }
-
-        public UIElement Target { get { return _target; } }
-
-        #region - - - - - - - - - IDragOver Attached Property - - - - - - - - - - - - - - - -
-
-        public static readonly DependencyProperty IsDragOverProperty = 
-                    DependencyProperty.RegisterAttached( "IsDragOver", typeof( bool ), typeof( DropHelper ),
-                                                         new FrameworkPropertyMetadata(  false )             );
-
-        public static void SetIsDragOver( UIElement element, bool value )
-        {
-            element.SetValue( IsDragOverProperty, value );
-        }
-
-        public static bool GetIsDragOver( UIElement element )
-        {
-            return (bool)element.GetValue( IsDragOverProperty );
-        }
-
-        #endregion
-
-
-        public event EventHandler< DropHelperEventArgs > QueryDragDataValid;
-        public event EventHandler< DropHelperEventArgs > TargetDrop;
-        public event EventHandler< DropHelperEventArgs > RealTargetDragLeave;
-
-        protected virtual void OnTargetDragEnter(object sender, DragEventArgs e)
-        {
-            _dragInProgress = true;
-
-            OnQueryDragDataValid( sender, e );
-
-            if( e.Effects != DragDropEffects.None && !_isDragOverSignalled )
-            {
-                SetIsDragOver( _target, true );
-                _isDragOverSignalled = true;
-            }
-        }
-
-        protected virtual void OnTargetDragLeave(object sender, DragEventArgs e)
-        {
-            _dragInProgress = false;
-
-            // It appears there's a quirk in the drag/drop system.  While the user is dragging the object
-            // over our control it appears the system will send us (quite frequently) DragLeave followed 
-            // immediately by DragEnter events.  So when we get DragLeave, we can't be sure that the 
-            // drag/drop operation was actually terminated.  Therefore, instead of doing cleanup
-            // immediately, we schedule the cleanup to execute later and if during that time we receive
-            // another DragEnter or DragOver event, then we don't do the cleanup.
-            _target.Dispatcher.BeginInvoke( new Action( ()=> {
-                                    if( _dragInProgress == false ) OnRealTargetDragLeave( sender, e ); } ) );
-        }
-
-        protected virtual void OnTargetDragOver(object sender, DragEventArgs e)
-        {
-            _dragInProgress = true;
-
-            OnQueryDragDataValid( sender, e );
-        }
-
-        protected virtual void OnTargetDrop(object sender, DragEventArgs e)
-        {
-            if( TargetDrop != null )
-            {
-                TargetDrop( this, new DropHelperEventArgs( sender, e ) );
-            }
-
-            if( _isDragOverSignalled )
-            {
-                _isDragOverSignalled = false;
-                SetIsDragOver( _target, false );
-            }
-        }
-
-        protected virtual void OnQueryDragDataValid( object sender, DragEventArgs eventArgs )
-        {
-            eventArgs.Handled = true;
-
-            if( QueryDragDataValid != null )
-            {
-                QueryDragDataValid( this, new DropHelperEventArgs( sender, eventArgs ) );
-            }
-        }
-
-        protected virtual void OnRealTargetDragLeave( object sender, DragEventArgs eventArgs )
-        {
-            if( RealTargetDragLeave != null )
-            {
-                RealTargetDragLeave( this, new DropHelperEventArgs( sender, eventArgs ) );
-            }
-
-            if( _isDragOverSignalled )
-            {
-                _isDragOverSignalled = false;
-                SetIsDragOver( _target, false );
-            }
-        }
-
-
-        private UIElement           _target;
-        private bool                _dragInProgress;
-        private bool                _isDragOverSignalled;
-    }
 }

@@ -77,7 +77,7 @@ namespace Droppy.Data
             try
             {
                 using( IsolatedStorageFile isf = IsolatedStorageFile.GetUserStoreForAssembly() )
-                using( Stream stream = isf.OpenFile( "DroppyData", FileMode.Open, FileAccess.Read, FileShare.Read ) )
+                using( Stream stream = new IsolatedStorageFileStream( "DroppyData", FileMode.Open, FileAccess.Read, FileShare.Read, isf ) )
                 {
                     Load( stream, _defaultSaveFormat );
                 }
@@ -132,7 +132,7 @@ namespace Droppy.Data
         public void Save()
         {
             using( IsolatedStorageFile isf = IsolatedStorageFile.GetUserStoreForAssembly() )
-            using( Stream stream = isf.OpenFile( "DroppyData", FileMode.Create, FileAccess.Write, FileShare.None ) )
+            using( Stream stream = new IsolatedStorageFileStream( "DroppyData", FileMode.Create, FileAccess.Write, FileShare.None, isf ) )
             {
                 Save( stream, _defaultSaveFormat );
             }

@@ -2,14 +2,21 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:Droppy"
-        Title="MainWindow" SizeToContent="WidthAndHeight" ResizeMode="NoResize"
+        Title="MainWindow" ResizeMode="NoResize" SizeToContent="WidthAndHeight"
         WindowStartupLocation="CenterScreen" WindowStyle="None" Background="Transparent" AllowsTransparency="True">
     <Border CornerRadius="8" Background="{DynamicResource MainWindowBackground}">
-        <DockPanel>
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>            
             <Border Background="{DynamicResource MainWindowTitleBarBrush}" Height="28"
-                    DockPanel.Dock="Top" CornerRadius="8" Margin="0,0,0,5"/>
-            <local:ResizeBarControl DockPanel.Dock="Bottom" Margin="0,5,0,0"/>
-            <local:WidgetMatrix x:Name="widgetContainer" />
+                    Grid.Row="0" CornerRadius="8" Margin="0,0,0,5"/>
+
+            <local:WidgetMatrix Grid.Row="1" x:Name="widgetContainer" HorizontalAlignment="Left" VerticalAlignment="Top" />
+
+            <local:ResizeBarControl x:Name="Resizer" Grid.Row="2" Margin="0,5,0,0"/>
 
             <Popup Name="TrashCanPopup" AllowsTransparency="True" Placement="Left">
                 <Popup.RenderTransform>
@@ -40,6 +47,6 @@
                     </Border>
                 </Border>
             </Popup>
-        </DockPanel>
+        </Grid>
     </Border>
 </Window>

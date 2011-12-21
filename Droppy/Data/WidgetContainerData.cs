@@ -68,8 +68,6 @@ namespace Droppy.Data
     }
 
 
-
-
     [Serializable]
     public class WidgetContainerData : WidgetData,
                                        INotifyWidgetContainerChanged
@@ -87,6 +85,10 @@ namespace Droppy.Data
 
         public int RowCount { get { return _widgetArray != null ? _widgetArray.GetLength( 0 ) : 0; } }
 
+        public int FirstRow { get { return _firstRowIndex; } }
+
+        public int FirstColumn { get { return _firstColumnIndex; } }
+
         public WidgetData this[ int row, int column ]
         {
             get { return _widgetArray[ row - _firstRowIndex, column - _firstColumnIndex ]; }
@@ -99,62 +101,93 @@ namespace Droppy.Data
             remove { _containerChangedEvent -= value; }
         }
 
+        public event EventHandler ContainerResized
+        {
+            add { _containerResizedEvent += value; }
+            remove { _containerResizedEvent -= value; }
+        }
+
+
         public void Resize( int numRows, int numColumns, WidgetContainerResizeJustify justify )
         {
             if( numRows > 256 || numColumns > 256 )
             {
                 throw new ApplicationException( string.Format( "Attemp to allocate too much ({0} x {1})", numRows, numColumns ) );
             }
+            else if( numRows == RowCount && numColumns == ColumnCount )
+            {
+                return;
+            }
+
+            Validate();
 
             int currentNumRows = this.RowCount;
             int currentNumColumns = this.ColumnCount;
             int shiftRows = ( justify.HasFlag( WidgetContainerResizeJustify.Bottom ) ? numRows - currentNumRows : 0 );
             int shiftColumns = ( justify.HasFlag( WidgetContainerResizeJustify.Right ) ? numColumns - currentNumColumns : 0 );
-            int r, rMax, c, cMax;
+            int r, rFirst, rMax, c, cFirst, cMax;
 
             if( shiftRows < 0 )
             {
-                r = -shiftRows;
+                rFirst = -shiftRows;
                 rMax = currentNumRows;
             }
             else
             {
-                r = 0;
+                rFirst = 0;
                 rMax = Math.Min( currentNumRows, numRows );
             }
 
             if( shiftColumns < 0 )
             {
-                c = -shiftColumns;
+                cFirst = -shiftColumns;
                 cMax = currentNumColumns;
             }
             else
             {
-                c = 0;
+                cFirst = 0;
                 cMax = Math.Min( currentNumColumns, numColumns );
             }
 
             WidgetData[,] newArray = new WidgetData[ numRows, numColumns ];
 
-            for( ; r < rMax; r++ )
+            for( r = rFirst ; r < rMax; r++ )
             {
-                for( ; c < cMax; c++ )
+                for( c = cFirst; c < cMax; c++ )
                 {
                     newArray[ r + shiftRows, c + shiftColumns ] = _widgetArray[ r, c ];
                 }
             }
 
             _widgetArray = newArray;
-            _firstRowIndex += shiftRows;
-            _firstColumnIndex += shiftColumns;
+            _firstRowIndex -= shiftRows;
+            _firstColumnIndex -= shiftColumns;
+
+            IsDirty = true;
+
+            Validate();
+
+            OnContainerResized();
+
+            Validate();
         }
 
         public void Remove( WidgetData widget )
         {
             if( widget.Parent == this )
             {
-                this[ widget.Row, widget.Column ] = null;
+                if( this[ widget.Row, widget.Column ] == widget )
+                {
+                    this[ widget.Row, widget.Column ] = null;
+                }
+                else
+                {
+                    System.Diagnostics.Debug.Assert( false, "widget location doesn't match its parent!!" );
+                    throw new InvalidProgramException();
+                }
             }
+
+            Validate();
         }
 
         public override void ClearDirtyFlag( bool includeChildren )
@@ -172,13 +205,31 @@ namespace Droppy.Data
             IterateChildren( null, (r,c,w,o) => {
                 if( w != null )
                 {
-                    w.PostDeserialize();
+                    // If something went horribly wrong and this object ended up with some child
+                    // that doesn't actually belong to it, let's erase it now after deserialization
+                    if( w.Parent != this )
+                    {
+                        this[ r, c ] = null;
+                    }
+                    else
+                    {
+                        w.SetOwner( this, r, c );
 
-                    // just in case the subscription is already set up, let's try to kill it.
-                    // if it is not setup, the "-=" won't have any effect
-                    w.IsDirtyChanged -= OnChildIsDirtyChanged;
-                    w.IsDirtyChanged += OnChildIsDirtyChanged;
+                        w.PostDeserialize();
+
+                        // just in case the subscription is already set up, let's try to kill it.
+                        // if it is not setup, the "-=" won't have any effect
+                        w.IsDirtyChanged -= OnChildIsDirtyChanged;
+                        w.IsDirtyChanged += OnChildIsDirtyChanged;
+                    }
                 }
+            } );
+        }
+
+        public void Validate()
+        {
+            IterateChildren( null, (r,c,w,o) => {
+                System.Diagnostics.Debug.Assert( w == null || ( w.Parent == this && w.Row == r && w.Column == c ) );
             } );
         }
 
@@ -207,6 +258,14 @@ namespace Droppy.Data
             {
                 _containerChangedEvent( this, new WidgetContainerChangedEventArgs(
                                         NotifyCollectionChangedAction.Remove, row, column, widget, null ) );
+            }
+        }
+
+        protected virtual void OnContainerResized()
+        {
+            if( _containerResizedEvent != null )
+            {
+                _containerResizedEvent( this, new EventArgs() );
             }
         }
 
@@ -289,9 +348,9 @@ namespace Droppy.Data
 
         private WidgetData ClearWidget( int row, int column )
         {
-            WidgetData widget = _widgetArray[ row, column ];
+            WidgetData widget = _widgetArray[ row - _firstRowIndex, column - _firstColumnIndex ];
 
-            _widgetArray[ row, column ] = null;
+            _widgetArray[ row - _firstRowIndex, column - _firstColumnIndex ] = null;
 
             if( widget != null )
             {
@@ -308,6 +367,8 @@ namespace Droppy.Data
             int                             numColumns = this.ColumnCount;
             WidgetContainerResizeJustify    resizeJustify = 0;
             WidgetData                      removedWidget = null;
+
+            Validate();
 
             // the same widget is being inserted at the same spot where it is already located,
             // let not do anything and just exit
@@ -345,9 +406,16 @@ namespace Droppy.Data
                 Resize( numRows, numColumns, resizeJustify );
             }
 
+            Validate();
+
             if( widget != null )
             {
-                _widgetArray[ row, column ] = widget;
+                if( widget.HasOwner )
+                {
+                    widget.Parent.Remove( widget );
+                }
+
+                _widgetArray[ row - _firstRowIndex, column - _firstColumnIndex ] = widget;
 
                 widget.SetOwner( this, row, column );
                 widget.IsDirtyChanged += OnChildIsDirtyChanged;
@@ -367,6 +435,8 @@ namespace Droppy.Data
             {
                 OnWidgetRemoved( row, column, removedWidget );
             }
+
+            Validate();
 
             IsDirty = true;
         }
@@ -390,7 +460,7 @@ namespace Droppy.Data
             {
                 for( int c = 0; c < columns; c++ )
                 {
-                    callback( r, c, _widgetArray[ r, c ], userData );
+                    callback( r + _firstRowIndex, c + _firstColumnIndex, _widgetArray[ r, c ], userData );
                 }
             }
         }
@@ -403,5 +473,8 @@ namespace Droppy.Data
 
         [NonSerialized]
         private WidgetContainerChangedEventHandler  _containerChangedEvent;
+
+        [NonSerialized]
+        private EventHandler                        _containerResizedEvent;
     }
 }

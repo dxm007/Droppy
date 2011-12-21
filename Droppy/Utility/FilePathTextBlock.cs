@@ -14,7 +14,7 @@ using System.Windows.Shapes;
 
 namespace Droppy
 {
-    class FilePathTextBlock : TextBlock
+    public class FilePathTextBlock : TextBlock
     {
         static FilePathTextBlock()
         {

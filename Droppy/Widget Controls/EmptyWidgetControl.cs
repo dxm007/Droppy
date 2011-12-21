@@ -26,7 +26,7 @@ namespace Droppy
 
         public EmptyWidgetControl()
         {
-            new FileDropHelper( this, false ).Drop += OnDrop;
+            new FileDropHelper( this, false ).FileDrop += OnDrop;
         }
 
         public override void OnApplyTemplate()
@@ -56,18 +56,22 @@ namespace Droppy
 
     public class FileDropEventArgs : EventArgs
     {
-        public FileDropEventArgs( FrameworkElement source, string[] files ) : base()
+        public FileDropEventArgs( FrameworkElement source, bool isMove, string[] files ) : base()
         {
             _source = source;
             _fileList = files;
+            _isMove = isMove;
         }
 
         public string[] Files { get { return _fileList; } }
+
+        public bool IsMove { get { return _isMove; } }
 
         public FrameworkElement Source { get { return _source; } }
 
         private FrameworkElement    _source;
         private string[]            _fileList;
+        private bool                _isMove;
     }
 
     public class FileDropHelper : DropHelper
@@ -78,7 +82,7 @@ namespace Droppy
             _allowMultipleFiles = allowMultiple;
         }
 
-        public event EventHandler< FileDropEventArgs >  Drop;
+        public event EventHandler< FileDropEventArgs >  FileDrop;
 
         protected override void OnTargetDrop(object sender, DragEventArgs e)
         {
@@ -86,9 +90,9 @@ namespace Droppy
 
             if( files == null ) return;
 
-            if( Drop != null & files.Length > 0 )
+            if( FileDrop != null & files.Length > 0 )
             {
-                Drop( this, new FileDropEventArgs( (FrameworkElement)Target, files ) );
+                FileDrop( this, new FileDropEventArgs( (FrameworkElement)Target, IsMove( e ), files ) );
             }
 
             e.Handled = true;
@@ -106,11 +110,15 @@ namespace Droppy
             }
             else
             {
-                eventData.Effects = eventData.KeyStates.HasFlag( DragDropKeyStates.ShiftKey ) ?
-                                                        DragDropEffects.Move : DragDropEffects.Copy ;
+                eventData.Effects = IsMove( eventData ) ? DragDropEffects.Move : DragDropEffects.Copy ;
             }
 
             eventData.Handled = true;
+        }
+
+        private bool IsMove( DragEventArgs e )
+        {
+            return e.KeyStates.HasFlag( DragDropKeyStates.ShiftKey );
         }
 
 

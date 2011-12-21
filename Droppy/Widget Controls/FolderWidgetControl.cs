@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Windows;
@@ -21,6 +22,40 @@ namespace Droppy
         static FolderWidgetControl()
         {
             DefaultStyleKeyProperty.OverrideMetadata( typeof( FolderWidgetControl ), new FrameworkPropertyMetadata( typeof( FolderWidgetControl ) ) );
+        }
+
+        public FolderWidgetControl()
+        {
+            AddHandler( Button.ClickEvent, new RoutedEventHandler( OnClick ) );
+
+            new FileDropHelper( this, true ).FileDrop += OnFileDrop;
+        }
+
+        private void OnClick( object sender, RoutedEventArgs e )
+        {
+            Data.FolderWidgetData data = DataContext as Data.FolderWidgetData;
+
+            if( data != null )
+            {
+                Process.Start( "explorer.exe", "\"" + data.Path + "\"" );
+            }
+        }
+
+        private void OnFileDrop( object sender, FileDropEventArgs e )
+        {
+            IFileOperation          fileOp = new FileOperationG1();
+            Data.FolderWidgetData   data = DataContext as Data.FolderWidgetData;
+
+            if( data == null ) return;
+
+            fileOp.ParentWindow = Window.GetWindow( this );
+            fileOp.Operation = e.IsMove ? FILEOP_CODES.FO_MOVE :
+                                          FILEOP_CODES.FO_COPY ;
+            fileOp.From = e.Files;
+            fileOp.To = new string[1] { data.Path };
+            fileOp.Flags = FILEOP_FLAGS.FOF_ALLOWUNDO;
+            
+            fileOp.Execute();
         }
     }
 }

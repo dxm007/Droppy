@@ -67,9 +67,13 @@
     <Compile Include="Data\WidgetData.cs" />
     <Compile Include="Data\WidgetDocument.cs" />
     <Compile Include="ResizeBarControl.cs" />
+    <Compile Include="Utility\DragDropHelper.cs" />
+    <Compile Include="Utility\FileOperation.cs" />
     <Compile Include="Utility\FilePathTextBlock.cs" />
     <Compile Include="Utility\MouseEx.cs" />
+    <Compile Include="Utility\Utility.cs" />
     <Compile Include="Utility\WinApi.cs" />
+    <Compile Include="Utility\WindowMover.cs" />
     <Compile Include="Widget Controls\EmptyWidgetControl.cs" />
     <Compile Include="Widget Controls\FolderWidgetControl.cs" />
     <Compile Include="Widget Controls\WidgetControl.cs" />

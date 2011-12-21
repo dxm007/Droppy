@@ -26,8 +26,7 @@ namespace Droppy
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
-    public partial class MainWindow : Window,
-                                      IWindowMoverOwner
+    public partial class MainWindow : Window
     {
         public MainWindow()
         {
@@ -55,13 +54,9 @@ namespace Droppy
 
         private void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
-            new WindowMover( this, this );
+            new WindowMover( this );
             new TrashCanPopupManager( this, _windowData );
-        }
-
-        bool IWindowMoverOwner.IsMovable
-        {
-            get { return true; }
+            new MainWindowResizer( this, _windowData );
         }
 
         private void OnDocumentDirtyFlagChanged( object sender, EventArgs e )
@@ -98,7 +93,6 @@ namespace Droppy
 
         private MainWindowData      _windowData;
     }
-
 
 
 
@@ -147,7 +141,15 @@ namespace Droppy
 
             if( dragData.Widget != null )
             {
-                dragData.Widget.Parent.Remove( dragData.Widget );
+                if( dragData.Widget.HasOwner )
+                {
+                    System.Diagnostics.Debug.Print( "Deleting widget..." );
+                    dragData.Widget.Parent.Remove( dragData.Widget );
+                }
+                else
+                {
+                    System.Diagnostics.Debug.Print( "Deleted widget is deleted again!!" );
+                }
             }
         }
 
@@ -215,86 +217,222 @@ namespace Droppy
 
 
 
-    public interface IWindowMoverOwner
+    class MainWindowResizer
     {
-        bool IsMovable { get; }
-    }
-
-    public class WindowMover
-    {
-        public WindowMover( Window wnd, IWindowMoverOwner owner )
+        public MainWindowResizer( MainWindow parent, MainWindowData windowData )
         {
-            _wnd = wnd;
-            _owner = owner;
+            _parent = parent;
+            _windowData = windowData;
 
-            SetupEventCallbacks();
-        }
+            // Change the attribute once window initialization is complete.  Otherwise, instead of the
+            // center of the screen, the window shows up in the corner.
+            _parent.Dispatcher.BeginInvoke( new Action( () => {
+                _parent.SizeToContent = SizeToContent.Manual;
+            } ) );
 
-        private void SetupEventCallbacks()
-        {
-            _wnd.MouseLeftButtonDown += OnMouseLeftButtonDown;
-            _wnd.MouseLeftButtonUp += OnMouseLeftButtonUp;
-            _wnd.MouseMove += OnMouseMove;
-            _wnd.Closed += OnWindowClosed;
-        }
 
-        private void RevokeEventCallbacks()
-        {
-            _wnd.MouseLeftButtonDown -= OnMouseLeftButtonDown;
-            _wnd.MouseLeftButtonUp -= OnMouseLeftButtonUp;
-            _wnd.MouseMove -= OnMouseMove;
-            _wnd.Closed -= OnWindowClosed;
-        }
+            ResizeBarControl resizer = _parent.FindName( "Resizer" ) as ResizeBarControl;
 
-        void OnWindowClosed(object sender, EventArgs e)
-        {
-            RevokeEventCallbacks();
-        }
-
-        private void OnMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
-        {
-            if( _owner.IsMovable && _wnd.CaptureMouse() )
+            if( resizer != null )
             {
-                _isMouseDown = true;
-                _lastScreenPoint = _wnd.PointToScreen( e.GetPosition( _wnd ) );
+                resizer.Resize += OnResize;
+                resizer.ResizeComplete += OnResizeComplete;
+
+                _siteHeight = ( _parent.widgetContainer.ActualHeight -
+                                    _parent.widgetContainer.Margin.Height() -
+                                    _parent.widgetContainer.Padding.Height()  ) / _parent.widgetContainer.Rows;
+                _siteWidth = ( _parent.widgetContainer.ActualWidth -
+                                    _parent.widgetContainer.Margin.Width() -
+                                    _parent.widgetContainer.Padding.Width()  ) / _parent.widgetContainer.Columns;
+
+                _parent.widgetContainer.MinHeight = _parent.widgetContainer.ActualHeight;
+                _parent.widgetContainer.MinWidth = _parent.widgetContainer.ActualWidth;
             }
+        }
+
+        private void OnResize( object sender, ResizeBarEventArgs e )
+        {
+            if( !_isResizing )
+            {
+                _isResizing = true;
+                _currentSize = new Size( _parent.ActualWidth, _parent.ActualHeight );
+
+                _parent.widgetContainer.HorizontalAlignment = 
+                    e.ThumbId == ThumbId.Left ? HorizontalAlignment.Right : HorizontalAlignment.Left;
+
+                CalculateMinimumSize( e.ThumbId == ThumbId.Left );
+            }
+
+            UpdateWindowSize( e );
+
+            int rows, columns;
+            Size originalSize = _currentSize;
+
+            if( CalculateMatrixDimensions( out rows, out columns ) )
+            {
+                _parent.widgetContainer.Source.Resize( 
+                            rows, columns,
+                            e.ThumbId == ThumbId.Left ? Data.WidgetContainerResizeJustify.Right:
+                                                        Data.WidgetContainerResizeJustify.Left   );
+
+                _parent.widgetContainer.MinHeight += _currentSize.Height - originalSize.Height;
+                _parent.widgetContainer.MinWidth += _currentSize.Width - originalSize.Width;
+            }
+        }
+
+        private void OnResizeComplete( object sender, EventArgs e )
+        {
+            if( _parent.widgetContainer.HorizontalAlignment == HorizontalAlignment.Right )
+            {
+                BeginResizeAnimation( Window.LeftProperty, _parent.Left + _parent.Width - _currentSize.Width );
+            }
+
+            BeginResizeAnimation( Window.WidthProperty, _currentSize.Width );
+            BeginResizeAnimation( Window.HeightProperty, _currentSize.Height );
+
+            _isResizing = false;
+        }
+
+        private void UpdateWindowSize( ResizeBarEventArgs e )
+        {
+            double newWidth = _parent.ActualWidth + e.WidthDelta;
+            double newHeight = _parent.ActualHeight + e.HeightDelta;
+            double newLeft = _parent.Left + e.LeftDelta;
+
+            if( newHeight < _minimumSize.Height ) newHeight = _minimumSize.Height;
+            if( newWidth < _minimumSize.Width )
+            {
+                if( e.LeftDelta != 0.0 ) newLeft -= _minimumSize.Width - newWidth; 
+                newWidth = _minimumSize.Width;
+            }
+
+            _parent.Left = newLeft;
+            _parent.Width = newWidth;
+            _parent.Height = newHeight;
+        }
+
+        private void CalculateMinimumSize( bool isLeftSideDrag )
+        {
+            int numRows = _parent.widgetContainer.Rows;
+            int numCols = _parent.widgetContainer.Columns;
+            int r, c, firstColumn, lastColumn, colStep, firstRow, lastRow;
+            int prelastRow, prelastColumn;
+
+            if( isLeftSideDrag )
+            {
+                firstColumn = _parent.widgetContainer.Source.FirstColumn;
+                lastColumn = firstColumn + numCols;
+                prelastColumn = lastColumn - 1;
+                colStep = 1;
+            }
+            else
+            {
+                prelastColumn = _parent.widgetContainer.Source.FirstColumn;
+                lastColumn = prelastColumn - 1;
+                firstColumn = lastColumn + numCols;
+                colStep = -1;
+            }
+
+            prelastRow = _parent.widgetContainer.Source.FirstRow;
+            lastRow = prelastRow - 1;
+            firstRow = lastRow + numRows;
+
+            _minimumSize = _currentSize;
+
+            for( r = firstRow; r != prelastRow; r-- )
+            {
+                for( c = firstColumn; c != lastColumn; c += colStep )
+                {
+                    if( _parent.widgetContainer.Source[ r, c ] != null ) break;
+                }
+
+                if( c != lastColumn ) break;
+
+                _minimumSize.Height -= _siteHeight;
+            }
+
+            for( c = firstColumn; c != prelastColumn; c += colStep )
+            {
+                for( r = firstRow; r != lastRow; r-- )
+                {
+                    if( _parent.widgetContainer.Source[ r, c ] != null ) break;
+                }
+
+                if( r != lastRow ) break;
+
+                _minimumSize.Width -= _siteWidth;
+            }
+        }
+
+        private bool CalculateMatrixDimensions( out int rows, out int columns )
+        {
+            Size sz = _currentSize;
+
+            rows = _parent.widgetContainer.Rows;
+            columns = _parent.widgetContainer.Columns;
+
+            if( _currentSize.Width > _parent.ActualWidth + 45 )
+            {
+                while( columns > 1 && _currentSize.Width > _parent.ActualWidth + 45 )
+                {
+                    columns--;
+                    _currentSize.Width -= _siteWidth;
+                }
+            }
+            else
+            {
+                while( _currentSize.Width + _siteWidth - 25 <= _parent.ActualWidth )
+                {
+                    columns++;
+                    _currentSize.Width += _siteWidth;
+                }
+            }
+
+            if( _currentSize.Height > _parent.ActualHeight + 15 )
+            {
+                while( rows > 1 && _currentSize.Height > _parent.ActualHeight + 15 )
+                {
+                    rows--;
+                    _currentSize.Height -= _siteHeight;
+                }
+            }
+            else
+            {
+                while( _currentSize.Height + _siteHeight - 10 <= _parent.ActualHeight )
+                {
+                    rows++;
+                    _currentSize.Height += _siteHeight;
+                }
+            }
+
+            return sz != _currentSize;
+        }
+
+        private void BeginResizeAnimation( DependencyProperty property, double toValue )
+        {
+            DoubleAnimation animation = new DoubleAnimation();
+
+            animation.To = toValue;
+            animation.Duration = new TimeSpan( 1000000 );
+
+            // We want to clear the animation because as long as that object is alive it will
+            // no longer allow us to resize the window as its value will take precedence
+            // over the local one
+            animation.Completed += (o,e) => {
+                _parent.SetValue( property, toValue );
+                _parent.BeginAnimation( property, null );
+            };
+
+            _parent.BeginAnimation( property, animation );
         }
         
-        void OnMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
-        {
-            if( _isMouseDown )
-            {
-                _isMouseDown = false;
-                _isMoving = false;
-                _wnd.ReleaseMouseCapture();
-            }
-        }
 
-        void OnMouseMove(object sender, MouseEventArgs e)
-        {
-            if( !_isMouseDown ) return;
-
-            Point pt = _wnd.PointToScreen( e.GetPosition( _wnd ) );
-            Vector vect = Point.Subtract( pt, _lastScreenPoint );
-
-            if( !_isMoving )
-            {
-                // don't move the window if the user clicked the mouse and moved it less than 5 pixels
-                // in any direction
-                if( vect.LengthSquared < 25 ) return;
-
-                _isMoving = true;
-            }
-
-            _wnd.Left += vect.X;
-            _wnd.Top += vect.Y;
-            _lastScreenPoint = pt;
-        }
-
-        private Window                  _wnd;
-        private IWindowMoverOwner       _owner;
-        private Point                   _lastScreenPoint;
-        private bool                    _isMouseDown;
-        private bool                    _isMoving;
+        private MainWindow      _parent;
+        private MainWindowData  _windowData;
+        private double          _siteHeight;
+        private double          _siteWidth;
+        private bool            _isResizing;
+        private Size            _currentSize;
+        private Size            _minimumSize;
     }
 }

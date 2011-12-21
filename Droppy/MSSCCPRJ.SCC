@@ -1,0 +1,5 @@
+SCC = This is a source code control file
+
+[Droppy.csproj]
+SCC_Aux_Path = "P4SCC"
+SCC_Project_Name = Perforce Project

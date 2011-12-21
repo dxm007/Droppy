@@ -4,10 +4,11 @@ using System.Runtime.InteropServices;
 namespace Droppy {
 
 
-    public static class Win32
+    public static partial class Win32
     {
+        #region ------------------ user32.dll ----------------------------------
         [StructLayout(LayoutKind.Sequential)]
-        internal struct Point
+        public struct Point
         {
           public Int32 X;
           public Int32 Y;
@@ -15,6 +16,13 @@ namespace Droppy {
 
         [DllImport("user32.dll")]
         [return: MarshalAs(UnmanagedType.Bool)]
-        internal static extern bool GetCursorPos(ref Point pt);
+        public static extern bool GetCursorPos(ref Point pt);
+
+        #endregion
+
+
+        #region ----------------- shell32.dll ----------------------------------
+
+        #endregion
     }
 }
