@@ -168,18 +168,6 @@ namespace Droppy.Data
         }
 
 
-        private void LoadDummyData()
-        {
-            WidgetContainerData  container = new WidgetContainerData( 6, 1 );
-
-            container[0,0] = new FolderWidgetData() { Path = "logs" };
-            container[1,0] = new FolderWidgetData() { Path = "config" };
-            container[2,0] = new FolderWidgetData() { Path = "dll" };
-            container[3,0] = new FolderWidgetData() { Path = "common files" };
-
-            this.Root = container;
-        }
-
         private void OnRootNodeIsDirtyChanged( object sender, EventArgs e )
         {
             OnIsDirtyChanged();

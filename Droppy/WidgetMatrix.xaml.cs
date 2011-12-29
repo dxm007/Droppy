@@ -13,6 +13,9 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 
+using Droppy.Data;
+
+
 namespace Droppy
 {
     class WidgetMatrixData
@@ -20,7 +23,7 @@ namespace Droppy
         public int Rows { get; set; }
         public int Columns { get; set; }
         public Data.WidgetContainerData Source { get; set; }
-        public WidgetSiteControl[,] SiteGrid { get; set; }
+        public Array2D<WidgetSiteControl> SiteGrid { get; set; }
     }
 
     /// <summary>
@@ -37,43 +40,42 @@ namespace Droppy
             new WidgetMatrixDropHelper( this, _controlData );
         }
 
-        public int Columns
-        {
-            get { return _controlData.Columns; }
-        }
-
-        public int Rows
-        {
-            get { return _controlData.Rows; }
-        }
-
         public Data.WidgetContainerData Source
         {
             get { return _controlData.Source; }
             set { if( _controlData.Source != value ) UpdateSource( value ); }
         }
 
-        public void UpdateGrid( bool withAnimation )
+        public int Rows
         {
-            int firstRow, lastRow, firstColumn, lastColumn, rowCount, columnCount;
+            get
+            {
+                var source = _controlData.Source;
+                return source != null ? source.Bounds.RowCount : 0;
+            }
+        }
+
+        public int Columns
+        {
+            get
+            {
+                var source = _controlData.Source;
+                return source != null ? source.Bounds.ColumnCount : 0;
+            }
+        }
+
+        private void UpdateGrid( bool withAnimation )
+        {
             TimeSpan animationTime = new TimeSpan();
-            int r, c;
             List< WidgetSiteControl > sitesToRemove = new List<WidgetSiteControl>( 256 );
 
-            firstRow = _controlData.Source.FirstRow;
-            rowCount = _controlData.Source.RowCount;
-            lastRow = firstRow + rowCount;
-            firstColumn = _controlData.Source.FirstColumn;
-            columnCount = _controlData.Source.ColumnCount;
-            lastColumn = firstColumn + columnCount;
+            int rowCount = _controlData.Source.Bounds.RowCount;
+            int columnCount = _controlData.Source.Bounds.ColumnCount;
 
             ResizeRowOrColumn( matrixPanel.RowDefinitions, rowCount );
             ResizeRowOrColumn( matrixPanel.ColumnDefinitions, columnCount );
 
-            _controlData.Rows = rowCount;
-            _controlData.Columns = columnCount;
-
-            _controlData.SiteGrid = new WidgetSiteControl[ rowCount, columnCount ];
+            _controlData.SiteGrid = new Array2D<WidgetSiteControl>( rowCount, columnCount );
 
             foreach( var child in matrixPanel.Children )
             {
@@ -81,19 +83,16 @@ namespace Droppy
 
                 if( site == null ) continue;
 
-                if( site.ContainerRow >= lastRow || site.ContainerRow < firstRow ||
-                    site.ContainerColumn >= lastColumn || site.ContainerColumn < firstColumn )
+                if( !_controlData.Source.Bounds.Contains( site.Location ) )
                 {
                     if( withAnimation )
                     {
-                        TranslateTransform  transform = (TranslateTransform)( (TransformGroup)site.RenderTransform ).Children[1];
+                        MatrixSize siteDistance = _controlData.Source.Bounds.Distance( site.Location );
 
-                        transform.Y = ( site.ActualHeight + site.Margin.Height() ) *
-                                      ( site.ContainerRow >= lastRow ? ( site.ContainerRow - lastRow + 1 ) :
-                                        site.ContainerRow < firstRow ? ( site.ContainerRow - firstRow )    : 0.0 );
-                        transform.X = ( site.ActualWidth + site.Margin.Width() ) *
-                                      ( site.ContainerColumn >= lastColumn ? ( site.ContainerColumn - lastColumn + 1 ) :
-                                        site.ContainerColumn < firstColumn ? ( site.ContainerColumn - firstColumn )    : 0.0 );
+                        TranslateTransform transform = (TranslateTransform)( (TransformGroup)site.RenderTransform ).Children[1];
+
+                        transform.Y = site.HeightWithMargin * siteDistance.RowCount;
+                        transform.X = site.WidthWithMargin * siteDistance.ColumnCount;
 
                         AnimateSiteScaleTransform( site, ref animationTime, 1, 0,
                                                    new EventHandler( (o,e) => {
@@ -107,8 +106,11 @@ namespace Droppy
                 }
                 else
                 {
-                    _controlData.SiteGrid[ site.ContainerRow - firstRow,
-                                           site.ContainerColumn - firstColumn ] = site;
+                    MatrixLoc arrayIndex = _controlData.Source.Bounds.ToIndex( site.Location );
+
+                    _controlData.SiteGrid[ arrayIndex ] = site;
+
+                    site.UpdateGridPosition();
                 }
             }
 
@@ -117,30 +119,28 @@ namespace Droppy
                 matrixPanel.Children.Remove( site );
             }
 
-            for( r = 0; r < rowCount; r++ )
+            foreach( MatrixLoc loc in _controlData.Source.Bounds )
             {
-                for( c = 0; c < columnCount; c++ )
-                {
-                    if( _controlData.SiteGrid[ r, c ] == null )
-                    {
-                        var site = InitWidgetSite( r, c, withAnimation, ref animationTime );
-                    }
+                MatrixLoc arrayIndex = _controlData.Source.Bounds.ToIndex( loc );
 
-                    _controlData.SiteGrid[ r, c ].Content = _controlData.Source[ r + firstRow, c + firstColumn ];
+                if( _controlData.SiteGrid[ arrayIndex ] == null )
+                {
+                    var site = CreateWidgetSite( loc, withAnimation, ref animationTime );
+
+                    _controlData.SiteGrid[ arrayIndex ] = site;
                 }
+
+                _controlData.SiteGrid[ arrayIndex ].Content = _controlData.Source[ loc ];
             }
         }
 
-        private WidgetSiteControl InitWidgetSite( int row, int column, bool withAnimation, ref TimeSpan animationTime )
+        private WidgetSiteControl CreateWidgetSite( MatrixLoc location, bool withAnimation, ref TimeSpan animationTime )
         {
             var site = new WidgetSiteControl();
             var transform = new TransformGroup();
 
             transform.Children.Add( withAnimation ? new ScaleTransform( 0, 0 ) : new ScaleTransform( 1, 1 ) );
             transform.Children.Add( new TranslateTransform() );
-
-            site.SetValue( Grid.RowProperty, row );
-            site.SetValue( Grid.ColumnProperty, column );
             
             site.RenderTransform = transform;
             site.RenderTransformOrigin = new Point( 0.5, 0.5 );
@@ -152,7 +152,7 @@ namespace Droppy
 
             matrixPanel.Children.Add( site );
 
-            _controlData.SiteGrid[ row, column ] = site;
+            site.Location = location;
 
             return site;
         }
@@ -171,6 +171,17 @@ namespace Droppy
             {
                 while( col.Count < newSize )
                 {
+                    DefinitionBase def = new T();
+
+                    if( def is ColumnDefinition )
+                    {
+                        ( (ColumnDefinition)def ).Width = new GridLength( 0, GridUnitType.Auto );
+                    }
+                    else
+                    {
+                        ( (RowDefinition)def ).Height = new GridLength( 0, GridUnitType.Auto );
+                    }
+
                     col.Add( new T() );
                 }
             }
@@ -217,8 +228,6 @@ namespace Droppy
                 transform.BeginAnimation( ScaleTransform.ScaleXProperty, animation );
                 transform.BeginAnimation( ScaleTransform.ScaleYProperty,
                                           BuildSiteScaleAnimation( beginTime, fromScale, toScale ) );
-
-                //beginTime += new TimeSpan( 500000 );
             }            
         }
 
@@ -236,15 +245,7 @@ namespace Droppy
 
         private void OnWidgetContainerChanged( object sender, Data.WidgetContainerChangedEventArgs e )
         {
-            foreach( var child in matrixPanel.Children )
-            {
-                var site = child as WidgetSiteControl;
-
-                if( site != null && site.ContainerRow == e.Row && site.ContainerColumn == e.Column )
-                {
-                    site.Content = e.NewWidget;
-                }
-            }
+            _controlData.SiteGrid[ e.Location ].Content = e.NewWidget;
         }
 
         private void OnWidgetContainerResized( object sender, EventArgs e )
@@ -289,7 +290,7 @@ namespace Droppy
         }
 
 
-        private delegate void ProcessDataObjectDelegate( int insertRow, int insertCol, WidgetSiteDragDropData data );
+        private delegate void ProcessDataObjectDelegate( MatrixLoc insertLoc, WidgetSiteDragDropData data );
 
         private void ProcessDataObject( DragEventArgs eventArgs, ProcessDataObjectDelegate callback )
         {
@@ -307,19 +308,22 @@ namespace Droppy
                                                             data.Site.ActualHeight + data.Site.Margin.Height() ) );
                 Point   dragCenter = new Point( dragRect.X + dragRect.Width / 2,
                                                 dragRect.Y + dragRect.Height / 2 );
-                int     insertRow = (int)( ( dragCenter.Y + dragRect.Height ) / dragRect.Height ) - 1;
-                int     insertColumn = (int)( ( dragCenter.X + dragRect.Width ) / dragRect.Width ) - 1;
 
-                if( insertRow < 0 || insertColumn < 0 ||
-                    insertRow >= _controlData.Rows || insertColumn >= _controlData.Columns )
-                {
-                    eventArgs.Effects = DragDropEffects.None;
-                }
-                else
+                MatrixLoc insertIndex = new MatrixLoc(
+                            (int)( ( dragCenter.Y + dragRect.Height ) / dragRect.Height ) - 1,
+                            (int)( ( dragCenter.X + dragRect.Width  ) / dragRect.Width  ) - 1  );
+
+                MatrixLoc insertLoc = _controlData.Source.Bounds.ToLocation( insertIndex );
+
+                if( _controlData.Source.Bounds.Contains( insertLoc ) )
                 {
                     eventArgs.Effects = DragDropEffects.Move;
 
-                    callback( insertRow + _controlData.Source.FirstRow, insertColumn + _controlData.Source.FirstColumn, data );
+                    callback( insertLoc, data );
+                }
+                else
+                {
+                    eventArgs.Effects = DragDropEffects.None;
                 }
             }
         }
@@ -332,8 +336,7 @@ namespace Droppy
             public Data.WidgetData      widget;
             public double               translateX;
             public double               translateY;
-            public int                  newRow;
-            public int                  newColumn;
+            public MatrixLoc            newLocation;
         }
 
         class SiteShiftInfoComparer : IEqualityComparer< SiteShiftInfo >
@@ -354,11 +357,11 @@ namespace Droppy
         }
 
 
-        private void UpdateMatrixUI( int insertRow, int insertCol, WidgetSiteDragDropData data )
+        private void UpdateMatrixUI( MatrixLoc insertLoc, WidgetSiteDragDropData data )
         {
             List< SiteShiftInfo >       relocatedSites;
 
-            relocatedSites = GetShiftedSiteList( insertRow, insertCol, data );
+            relocatedSites = GetShiftedSiteList( insertLoc, data );
 
             var sitesToMove = relocatedSites.Except( _prevRelocatedSites, SiteShiftInfoComparer.Comparer ).ToList();
             var sitesToReverse = _prevRelocatedSites.Except( relocatedSites, SiteShiftInfoComparer.Comparer ).ToList();
@@ -376,23 +379,23 @@ namespace Droppy
             _prevRelocatedSites = relocatedSites;
         }
 
-        private void CommitMove( int insertRow, int insertCol, WidgetSiteDragDropData data )
+        private void CommitMove( MatrixLoc insertLoc, WidgetSiteDragDropData data )
         {
             List< SiteShiftInfo >   relocatedSites;
 
-            relocatedSites = GetShiftedSiteList( insertRow, insertCol, data );
+            relocatedSites = GetShiftedSiteList( insertLoc, data );
 
             if( relocatedSites.Count > 0 )
             {
                 foreach( var s in relocatedSites )
                 {
-                    _controlData.Source[ s.newRow, s.newColumn ] = s.widget;
+                    _controlData.Source[ s.newLocation ] = s.widget;
 
                     AnimateTranslate( s.site, TranslateTransform.XProperty, null );
                     AnimateTranslate( s.site, TranslateTransform.YProperty, null );
                 }
 
-                _controlData.Source[ insertRow, insertCol ] = data.Widget;
+                _controlData.Source[ insertLoc ] = data.Widget;
             }
 
             // If there are any controls left out of original position, return them now.
@@ -411,24 +414,22 @@ namespace Droppy
             _prevRelocatedSites.Clear();
         }
 
-        private List< SiteShiftInfo > GetShiftedSiteList( int insertRow, int insertCol, WidgetSiteDragDropData data )
+        private List< SiteShiftInfo > GetShiftedSiteList( MatrixLoc insertLoc, WidgetSiteDragDropData data )
         {
-            int                         sourceRow = data.Site.ContainerRow;
-            int                         sourceCol = data.Site.ContainerColumn;
-            int                         firstCol = _controlData.Source.FirstColumn;
-            int                         firstRow = _controlData.Source.FirstRow;
+            MatrixLoc                   sourceLoc = data.Site.Location;
             List< SiteShiftInfo >       relocatedSites;
             int                         i, step;
             double                      translateBy;
 
             // preallocate enough so we don't need to worry about reallocations
-            relocatedSites = new List<SiteShiftInfo>( _controlData.Rows + _controlData.Columns + 10 );
+            relocatedSites = new List<SiteShiftInfo>( _controlData.Source.Bounds.RowCount +
+                                                      _controlData.Source.Bounds.ColumnCount + 10 );
 
-            if( insertCol != sourceCol )
+            if( insertLoc.Column != sourceLoc.Column )
             {
                 translateBy = data.Site.ActualWidth + data.Site.Margin.Width();
 
-                if( insertCol < sourceCol )
+                if( insertLoc.Column < sourceLoc.Column )
                 {
                     step = 1;
                 }
@@ -438,21 +439,23 @@ namespace Droppy
                     translateBy = -translateBy;
                 }
 
-                for( i = insertCol; i != sourceCol; i += step )
+                for( i = insertLoc.Column; i != sourceLoc.Column; i += step )
                 {
-                    WidgetSiteControl ctrl = _controlData.SiteGrid[ sourceRow - firstRow, i - firstCol ];
+                    MatrixLoc arrayIndex = _controlData.Source.Bounds.ToIndex( new MatrixLoc( sourceLoc.Row, i ) );
+
+                    WidgetSiteControl ctrl = _controlData.SiteGrid[ arrayIndex ];
 
                     relocatedSites.Add( new SiteShiftInfo() { site = ctrl, widget = (Data.WidgetData)ctrl.Content,
                                                               translateX = translateBy, translateY = 0.0,
-                                                              newColumn = i + step, newRow = sourceRow             } );
+                                                              newLocation = new MatrixLoc( sourceLoc.Row, i + step ) } );
                 }
             }
 
-            if( insertRow != sourceRow )
+            if( insertLoc.Row != sourceLoc.Row )
             {
                 translateBy = data.Site.ActualHeight + data.Site.Margin.Height();
 
-                if( insertRow < sourceRow )
+                if( insertLoc.Row < sourceLoc.Row )
                 {
                     step = 1;
                 }
@@ -462,13 +465,15 @@ namespace Droppy
                     translateBy = -translateBy;
                 }
 
-                for( i = insertRow; i != sourceRow; i += step )
+                for( i = insertLoc.Row; i != sourceLoc.Row; i += step )
                 {
-                    WidgetSiteControl ctrl = _controlData.SiteGrid[ i - firstRow, insertCol - firstCol ];
+                    MatrixLoc arrayIndex = _controlData.Source.Bounds.ToIndex( new MatrixLoc( i, insertLoc.Column ) );
+
+                    WidgetSiteControl ctrl = _controlData.SiteGrid[ arrayIndex ];
 
                     relocatedSites.Add( new SiteShiftInfo() { site = ctrl, widget = (Data.WidgetData)ctrl.Content,
                                                               translateY = translateBy, translateX = 0.0,
-                                                              newColumn = insertCol, newRow = i + step             } );
+                                                              newLocation = new MatrixLoc( i + step, insertLoc.Column ) } );
                 }
             }
 

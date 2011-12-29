@@ -34,6 +34,19 @@ namespace Droppy
             base.OnApplyTemplate();
         }
 
+        protected override void OnClick( object sender, RoutedEventArgs e )
+        {
+            var dlg = new System.Windows.Forms.FolderBrowserDialog();
+
+            dlg.Description = "Select a folder";
+            dlg.ShowNewFolderButton = true;
+
+            if( dlg.ShowDialog( new Win32Window( this ) ) !=
+                                        System.Windows.Forms.DialogResult.OK ) return;
+
+            Site.SetWidget( new Data.FolderWidgetData() { Path = dlg.SelectedPath } );
+        }
+
         private void OnDrop( object sender, FileDropEventArgs e )
         {
             var fileInfo = new FileInfo( e.Files[0] );

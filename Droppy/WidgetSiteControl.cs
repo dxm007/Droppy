@@ -13,6 +13,8 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 
+using Droppy.Data;
+
 namespace Droppy
 {
     public class EmptySiteClass
@@ -62,8 +64,11 @@ namespace Droppy
             new WidgetSiteDragHelper( this );
         }
 
-        public int ContainerRow { get { return (int)GetValue( Grid.RowProperty ) + ParentContainer.Source.FirstRow; } }
-        public int ContainerColumn { get { return (int)GetValue( Grid.ColumnProperty ) + ParentContainer.Source.FirstColumn; } }
+        public MatrixLoc Location
+        {
+            get { return _location; }
+            set { _location = value; UpdateGridPosition(); }
+        }
 
         public WidgetMatrix ParentContainer
         {
@@ -75,9 +80,27 @@ namespace Droppy
             }
         }
 
+        public double HeightWithMargin
+        {
+            get { return this.ActualHeight + this.Margin.Height(); }
+        }
+
+        public double WidthWithMargin
+        {
+            get { return this.ActualWidth + this.Margin.Width(); }
+        }
+
         public void SetWidget( Data.WidgetData widget )
         {
-            ParentContainer.Source[ ContainerRow, ContainerColumn ] = widget;
+            ParentContainer.Source[ this.Location ] = widget;
+        }
+
+        public void UpdateGridPosition()
+        {
+            MatrixLoc  gridPosition = ParentContainer.Source.Bounds.ToIndex( _location );
+
+            SetValue( Grid.RowProperty, gridPosition.Row );
+            SetValue( Grid.ColumnProperty, gridPosition.Column );
         }
 
         private static void OnSourceChanged( DependencyObject d, DependencyPropertyChangedEventArgs e )
@@ -103,8 +126,8 @@ namespace Droppy
             }
         }
 
-
         private WidgetMatrix            _parentContainer;
+        private MatrixLoc               _location;
     }
 
 

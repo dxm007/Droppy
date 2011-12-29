@@ -19,4 +19,20 @@ namespace Droppy
         public static double Height( this Thickness obj ) { return obj.Top + obj.Bottom; }
     }
 
+    public class Win32Window : System.Windows.Forms.IWin32Window
+    {
+        public Win32Window( DependencyObject dependencyObject )
+            : this( Window.GetWindow( dependencyObject ) )
+        {
+        }
+
+        public Win32Window( Window window )
+        {
+            _handle = new System.Windows.Interop.WindowInteropHelper( window ).Handle;
+        }
+
+        public IntPtr Handle { get { return _handle; } }
+
+        private IntPtr      _handle;
+    }
 }

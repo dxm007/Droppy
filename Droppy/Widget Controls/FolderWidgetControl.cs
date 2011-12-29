@@ -26,12 +26,10 @@ namespace Droppy
 
         public FolderWidgetControl()
         {
-            AddHandler( Button.ClickEvent, new RoutedEventHandler( OnClick ) );
-
             new FileDropHelper( this, true ).FileDrop += OnFileDrop;
         }
 
-        private void OnClick( object sender, RoutedEventArgs e )
+        protected override void OnClick( object sender, RoutedEventArgs e )
         {
             Data.FolderWidgetData data = DataContext as Data.FolderWidgetData;
 

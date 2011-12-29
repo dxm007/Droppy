@@ -1,28 +1,41 @@
-- header bar needs controls:
-	- close button
-	- minimize button
-	- global commands:
-		* export data
-		* import data
+- Spend some time cleaning up code, maybe a little refactoring, definitely add a whole bunch of
+  comments to a whole bunch of places
 - ability to dock the window to top, left or right edge of the screen
-- when window not docked, it should be possible to minimize it
 - when window is docked, it should disappear from the taskbar and make itself topmost
-- ability to minimize the window (animate between minimum and normal size)
-- ability to hide the window (add hot key to bring it back)
 - when a second instance is launched, it should make the first one appear and exit
-- see if context menu can be custom drawn instead of windows standard one
 - add a context menu, allow users to copy/move files via the context menu "Paste" command
+- Add ability to set custom names/labels on items
 - folder should have a tool tip which displays full path when mouse is hovering over
 - create an icon for the application
+- research open source license to use
+- add about dialog
+----------------------------------------------------------------------------------------------
+- ability to hide the window (add hot key to bring it back)
+- in addition to folders, ability to add shortcuts
+	- shortcuts should use whatever icon associated with the shortcut in windows
+- add record/playback of file operations
 - implement container widgets which bring up a popup with child widget matrix control
 - implement profiles. Each profile defines set of folders/files to show in the UI.  User should
   be able to define multiple profiles and easily switch between them.
+- see if context menu can be custom drawn instead of windows standard one
+- add ability to reskin the UI through a settings dialog box.
+  
 - investigate if we can replace dragged adorner with a custom cursor that includes the image
   of the widget being dragged
 
 
 
 Completed:
+- clicking empty folder should bring up a folder selection dialog box
+- hookup export data button
+- hookup import data button
+- header bar needs controls:
+	- close button
+	- tools menu:
+		* export data
+		* import data
+- Bug: When window is resized from the left, cells on the right side end up being animated
+- investigate the use of StyleCop
 - animate the buttons that are created/destroyed during resize
 - there's a bug in calculating minimum window size so that widgets wouldn't get deleted
 - move folders by dragging when there are multiple columns

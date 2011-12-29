@@ -15,7 +15,7 @@ using System.Windows.Shapes;
 
 namespace Droppy
 {
-    public class WidgetControl : Control
+    public abstract class WidgetControl : Control
     {
         public WidgetSiteControl Site
         {
@@ -26,6 +26,13 @@ namespace Droppy
                 return _parentSite;
             }
         }
+
+        public WidgetControl()
+        {
+            AddHandler( Button.ClickEvent, new RoutedEventHandler( OnClick ) );
+        }
+
+        protected abstract void OnClick( object sender, RoutedEventArgs e );
 
         private void FindParent()
         {

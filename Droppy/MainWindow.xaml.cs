@@ -15,14 +15,11 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Windows.Threading;
 
+using Droppy.Data;
+
+
 namespace Droppy
 {
-    class MainWindowData
-    {
-        public Data.WidgetDocument  Document { get; set; }
-    }
-
-
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
@@ -56,7 +53,82 @@ namespace Droppy
         {
             new WindowMover( this );
             new TrashCanPopupManager( this, _windowData );
-            new MainWindowResizer( this, _windowData );
+
+            _windowResizer = new MainWindowResizer( this, _windowData );
+        }
+
+        private void OnToolsBtnClick( object sender, RoutedEventArgs e )
+        {
+            ToolsMenu.PlacementTarget = ToolsHdrButton;
+            ToolsMenu.IsOpen = true;
+        }
+
+        private void OnCloseBtnClick( object sender, RoutedEventArgs e )
+        {
+            Close();
+        }
+
+        private void OnExportMenuItemClick( object sender, RoutedEventArgs e )
+        {
+            Microsoft.Win32.SaveFileDialog dlg = new Microsoft.Win32.SaveFileDialog();
+
+            dlg.Title = "Export Configuration";
+            
+            AssignCommonFileDialogProps( dlg );
+
+            if( dlg.ShowDialog() != true ) return;
+
+            try
+            {
+                _windowData.Document.Save( dlg.OpenFile(), WidgetDocSaveFormat.Xml );
+            }
+            catch( Exception ex )
+            {
+                ReportToUserApplicationError( ex, "There were issues exporting configuration." );
+            }
+        }
+
+        private void OnImportMenuItemClick( object sender, RoutedEventArgs e )
+        {
+            Microsoft.Win32.OpenFileDialog dlg = new Microsoft.Win32.OpenFileDialog();
+
+            dlg.Title = "Import Configuration";
+
+            AssignCommonFileDialogProps( dlg );
+
+            if( dlg.ShowDialog() != true ) return;
+
+            try
+            {
+                _windowData.Document.Load( dlg.OpenFile(), WidgetDocSaveFormat.Xml );
+
+                widgetContainer.Source = _windowData.Document.Root;
+
+                _windowResizer.SizeParentToContent();
+            }
+            catch( Exception ex )
+            {
+                ReportToUserApplicationError( ex, "There were issues importing configuration." );
+            }
+        }
+
+        private void OnTestMenuItemClick( object sender, RoutedEventArgs e )
+        {
+            var animation = new DoubleAnimation();
+
+            animation.To = 5.0;
+            animation.Duration = new Duration( TimeSpan.FromSeconds( 0.4 ) );
+            animation.AutoReverse = true;
+
+            this.Width = this.ActualWidth;
+
+            this.BeginAnimation( Window.WidthProperty, animation );
+        }
+
+        private static void AssignCommonFileDialogProps( Microsoft.Win32.FileDialog dlg )
+        {
+            dlg.DefaultExt = "*.droppy";
+            dlg.Filter = "Droppy Configuration Files (*.droppy)|*.droppy";
         }
 
         private void OnDocumentDirtyFlagChanged( object sender, EventArgs e )
@@ -84,16 +156,35 @@ namespace Droppy
             }
             catch( Exception ex )
             {
-                MessageBox.Show( string.Format( "There were issues saving changes.\n\nException Type: {0}\nException Text: {1}",
-                                                ex.GetType().Name, ex.Message ),
-                                    "Application Error", MessageBoxButton.OK, MessageBoxImage.Warning );
+                ReportToUserApplicationError( ex, "There were issues saving changes" );
             }
         }
 
+        private void ReportToUserApplicationError( string format, params object[] args )
+        {
+            MessageBox.Show( string.Format( format, args ),
+                             "Application Error", MessageBoxButton.OK, MessageBoxImage.Warning );
+        }
+
+        private void ReportToUserApplicationError( Exception ex, string format, params object[] args )
+        {
+            object[] additionalArgs = new object[] { ex.GetType().Name, ex.Message };
+
+            ReportToUserApplicationError(
+                string.Format( "{0}\n\nException Type: {{{1}}}\nException Text: {{{2}}}",
+                               format, args.Length, args.Length + 1 ),
+                args.Concat( additionalArgs ).ToArray()                                   );
+        }
 
         private MainWindowData      _windowData;
+        private MainWindowResizer   _windowResizer;
     }
 
+
+    class MainWindowData
+    {
+        public Data.WidgetDocument Document { get; set; }
+    }
 
 
     class TrashCanPopupManager
@@ -216,7 +307,6 @@ namespace Droppy
     }
 
 
-
     class MainWindowResizer
     {
         public MainWindowResizer( MainWindow parent, MainWindowData windowData )
@@ -224,51 +314,60 @@ namespace Droppy
             _parent = parent;
             _windowData = windowData;
 
-            // Change the attribute once window initialization is complete.  Otherwise, instead of the
-            // center of the screen, the window shows up in the corner.
-            _parent.Dispatcher.BeginInvoke( new Action( () => {
-                _parent.SizeToContent = SizeToContent.Manual;
-            } ) );
+            // Parent window starts off being auto-sized based on its content. We must make this call 
+            // in order to enable resizing of the parent.
+            EnableManualSizingOnParent();
 
+            ResizeBarControl resizer = (ResizeBarControl)_parent.FindName( "Resizer" );
 
-            ResizeBarControl resizer = _parent.FindName( "Resizer" ) as ResizeBarControl;
+            resizer.Resize += OnResize;
+            resizer.ResizeComplete += OnResizeComplete;
 
-            if( resizer != null )
-            {
-                resizer.Resize += OnResize;
-                resizer.ResizeComplete += OnResizeComplete;
+            _siteCellSize = CalculateSiteCellSize();
+        }
 
-                _siteHeight = ( _parent.widgetContainer.ActualHeight -
-                                    _parent.widgetContainer.Margin.Height() -
-                                    _parent.widgetContainer.Padding.Height()  ) / _parent.widgetContainer.Rows;
-                _siteWidth = ( _parent.widgetContainer.ActualWidth -
-                                    _parent.widgetContainer.Margin.Width() -
-                                    _parent.widgetContainer.Padding.Width()  ) / _parent.widgetContainer.Columns;
+        public void SizeParentToContent()
+        {
+            _parent.SizeToContent = System.Windows.SizeToContent.WidthAndHeight;
 
-                _parent.widgetContainer.MinHeight = _parent.widgetContainer.ActualHeight;
-                _parent.widgetContainer.MinWidth = _parent.widgetContainer.ActualWidth;
-            }
+            _parent.ClearValue( Window.WidthProperty );
+            _parent.ClearValue( Window.HeightProperty );
+            _parent.widgetContainer.MinHeight = 0;
+            _parent.widgetContainer.MinWidth = 0;
+
+            _parent.UpdateLayout();
+
+            _parent.SizeToContent = System.Windows.SizeToContent.Manual;
+        }
+
+        private void OnResizeStarted( ResizeBarEventArgs e )
+        {
+            _isResizing = true;
+            _currentSize = new Size( _parent.ActualWidth, _parent.ActualHeight );
+
+            // We set min width/height on widget container element so that it remains static when the user
+            // sizes the main window to be smaller than what's needed to display the entire widget container.
+            _parent.widgetContainer.MinHeight = _parent.widgetContainer.ActualHeight;
+            _parent.widgetContainer.MinWidth = _parent.widgetContainer.ActualWidth;
+
+            _parent.widgetContainer.HorizontalAlignment =
+                e.ThumbId == ThumbId.Left ? HorizontalAlignment.Right : HorizontalAlignment.Left;
+
+            _minimumSize = CalculateMinimumSize( e.ThumbId == ThumbId.Left );
         }
 
         private void OnResize( object sender, ResizeBarEventArgs e )
         {
-            if( !_isResizing )
-            {
-                _isResizing = true;
-                _currentSize = new Size( _parent.ActualWidth, _parent.ActualHeight );
-
-                _parent.widgetContainer.HorizontalAlignment = 
-                    e.ThumbId == ThumbId.Left ? HorizontalAlignment.Right : HorizontalAlignment.Left;
-
-                CalculateMinimumSize( e.ThumbId == ThumbId.Left );
-            }
+            if( !_isResizing ) OnResizeStarted( e );
 
             UpdateWindowSize( e );
 
             int rows, columns;
             Size originalSize = _currentSize;
 
-            if( CalculateMatrixDimensions( out rows, out columns ) )
+            CalculateMatrixDimensions( out rows, out columns );
+
+            if( originalSize != _currentSize )
             {
                 _parent.widgetContainer.Source.Resize( 
                             rows, columns,
@@ -300,9 +399,11 @@ namespace Droppy
             double newLeft = _parent.Left + e.LeftDelta;
 
             if( newHeight < _minimumSize.Height ) newHeight = _minimumSize.Height;
+            
             if( newWidth < _minimumSize.Width )
             {
                 if( e.LeftDelta != 0.0 ) newLeft -= _minimumSize.Width - newWidth; 
+                
                 newWidth = _minimumSize.Width;
             }
 
@@ -311,63 +412,73 @@ namespace Droppy
             _parent.Height = newHeight;
         }
 
-        private void CalculateMinimumSize( bool isLeftSideDrag )
+        private void EnableManualSizingOnParent()
         {
-            int numRows = _parent.widgetContainer.Rows;
-            int numCols = _parent.widgetContainer.Columns;
-            int r, c, firstColumn, lastColumn, colStep, firstRow, lastRow;
-            int prelastRow, prelastColumn;
-
-            if( isLeftSideDrag )
+            // Change the attribute once window initialization is complete.  Otherwise, instead of the
+            // center of the screen, the window shows up in the corner.
+            _parent.Dispatcher.BeginInvoke( new Action( () =>
             {
-                firstColumn = _parent.widgetContainer.Source.FirstColumn;
-                lastColumn = firstColumn + numCols;
-                prelastColumn = lastColumn - 1;
-                colStep = 1;
-            }
-            else
-            {
-                prelastColumn = _parent.widgetContainer.Source.FirstColumn;
-                lastColumn = prelastColumn - 1;
-                firstColumn = lastColumn + numCols;
-                colStep = -1;
-            }
-
-            prelastRow = _parent.widgetContainer.Source.FirstRow;
-            lastRow = prelastRow - 1;
-            firstRow = lastRow + numRows;
-
-            _minimumSize = _currentSize;
-
-            for( r = firstRow; r != prelastRow; r-- )
-            {
-                for( c = firstColumn; c != lastColumn; c += colStep )
-                {
-                    if( _parent.widgetContainer.Source[ r, c ] != null ) break;
-                }
-
-                if( c != lastColumn ) break;
-
-                _minimumSize.Height -= _siteHeight;
-            }
-
-            for( c = firstColumn; c != prelastColumn; c += colStep )
-            {
-                for( r = firstRow; r != lastRow; r-- )
-                {
-                    if( _parent.widgetContainer.Source[ r, c ] != null ) break;
-                }
-
-                if( r != lastRow ) break;
-
-                _minimumSize.Width -= _siteWidth;
-            }
+                _parent.SizeToContent = SizeToContent.Manual;
+            } ) );
         }
 
-        private bool CalculateMatrixDimensions( out int rows, out int columns )
+        private Size CalculateSiteCellSize()
         {
-            Size sz = _currentSize;
+            // This function calculates how much space actual cell in the widget matrix takes. For this calculation:
+            // {-----------||---------[cell][cell][cell][cell]-----------||-------------}
+            //   margin       padding                           padding      magrin
+            //
+            // '{' and '}' = bounding box of the widget container control
+            // '||' = visible boundary of the widget container control
+            //
+            // cell_size = ( actual_size - total_padding - total_margin ) / number_of_cells
 
+            return new Size( ( _parent.widgetContainer.ActualWidth -
+                                    _parent.widgetContainer.Margin.Width() -
+                                    _parent.widgetContainer.Padding.Width() ) / _parent.widgetContainer.Columns,
+                             ( _parent.widgetContainer.ActualHeight -
+                                    _parent.widgetContainer.Margin.Height() -
+                                    _parent.widgetContainer.Padding.Height() ) / _parent.widgetContainer.Rows );
+        }
+
+        private Size CalculateMinimumSize( bool isLeftSideDrag )
+        {
+            Size            minimumSize = _currentSize;
+            var             dataSource = _parent.widgetContainer.Source;
+
+            foreach( MatrixLoc loc in dataSource.Bounds.AsEnumerable( ScanDirection.BottomToTop ) )
+            {
+                if( dataSource[ loc ] != null || loc.Row == dataSource.Bounds.Row )
+                {
+                    minimumSize.Height -= _siteCellSize.Height *
+                                            ( dataSource.Bounds.LastRow - loc.Row - 1 );
+                    break;
+                }
+            }
+
+            var scanParameters = isLeftSideDrag ? 
+                new { dir = ScanDirection.LeftToRight, stopCol = dataSource.Bounds.LastColumn - 1 } :
+                new { dir = ScanDirection.RightToLeft, stopCol = dataSource.Bounds.Column };
+
+            foreach( MatrixLoc loc in dataSource.Bounds.AsEnumerable( scanParameters.dir ) )
+            {
+                if( dataSource[ loc ] != null || loc.Column == scanParameters.stopCol )
+                {
+                    int removableCellCount = isLeftSideDrag ? 
+                                ( loc.Column - dataSource.Bounds.Column ) :
+                                ( dataSource.Bounds.LastColumn - loc.Column - 1 );
+
+                    minimumSize.Width -= _siteCellSize.Width * removableCellCount;
+
+                    break;
+                }
+            }
+
+            return minimumSize;
+        }
+
+        private void CalculateMatrixDimensions( out int rows, out int columns )
+        {
             rows = _parent.widgetContainer.Rows;
             columns = _parent.widgetContainer.Columns;
 
@@ -376,15 +487,15 @@ namespace Droppy
                 while( columns > 1 && _currentSize.Width > _parent.ActualWidth + 45 )
                 {
                     columns--;
-                    _currentSize.Width -= _siteWidth;
+                    _currentSize.Width -= _siteCellSize.Width;
                 }
             }
             else
             {
-                while( _currentSize.Width + _siteWidth - 25 <= _parent.ActualWidth )
+                while( _currentSize.Width + _siteCellSize.Width - 25 <= _parent.ActualWidth )
                 {
                     columns++;
-                    _currentSize.Width += _siteWidth;
+                    _currentSize.Width += _siteCellSize.Width;
                 }
             }
 
@@ -393,19 +504,17 @@ namespace Droppy
                 while( rows > 1 && _currentSize.Height > _parent.ActualHeight + 15 )
                 {
                     rows--;
-                    _currentSize.Height -= _siteHeight;
+                    _currentSize.Height -= _siteCellSize.Height;
                 }
             }
             else
             {
-                while( _currentSize.Height + _siteHeight - 10 <= _parent.ActualHeight )
+                while( _currentSize.Height + _siteCellSize.Height - 10 <= _parent.ActualHeight )
                 {
                     rows++;
-                    _currentSize.Height += _siteHeight;
+                    _currentSize.Height += _siteCellSize.Height;
                 }
             }
-
-            return sz != _currentSize;
         }
 
         private void BeginResizeAnimation( DependencyProperty property, double toValue )
@@ -425,14 +534,13 @@ namespace Droppy
 
             _parent.BeginAnimation( property, animation );
         }
-        
 
         private MainWindow      _parent;
         private MainWindowData  _windowData;
-        private double          _siteHeight;
-        private double          _siteWidth;
         private bool            _isResizing;
         private Size            _currentSize;
         private Size            _minimumSize;
+        private Size            _siteCellSize;
     }
+
 }

@@ -13,10 +13,8 @@ namespace Droppy.Data
     [Serializable]
     public abstract class WidgetData : IXmlSerializable
     {
-        public int Row { get { return _row; } }
-        
-        public int Column { get { return _column; } }
-        
+        public MatrixLoc Location { get { return _location; } }
+
         public WidgetContainerData Parent { get { return _parent; } }
         
         public bool HasOwner { get { return Parent != null; } }
@@ -42,18 +40,16 @@ namespace Droppy.Data
         }
 
 
-        public void SetOwner( WidgetContainerData parent, int row, int column )
+        public void SetOwner( WidgetContainerData parent, MatrixLoc location )
         {
-            _row = row;
-            _column = column;
+            _location = location;
             _parent = parent;
         }
 
         public void ClearOwner()
         {
             _parent = null;
-            _row = 0;
-            _column = 0;
+            _location = new MatrixLoc();
         }
 
         public virtual void ClearDirtyFlag( bool includeChildren )
@@ -102,8 +98,8 @@ namespace Droppy.Data
 
         void IXmlSerializable.ReadXml( XmlReader reader )
         {
-            _row = XmlConvert.ToInt32( reader.GetAttribute( "row" ) );
-            _column = XmlConvert.ToInt32( reader.GetAttribute( "column" ) );
+            _location.Row = XmlConvert.ToInt32( reader.GetAttribute( "row" ) );
+            _location.Column = XmlConvert.ToInt32( reader.GetAttribute( "column" ) );
 
             DeserializeFromXml( reader );
 
@@ -124,8 +120,8 @@ namespace Droppy.Data
         void IXmlSerializable.WriteXml( XmlWriter writer )
         {
             writer.WriteStartElement( GetType().Name );
-            writer.WriteAttributeString( "row", _row.ToString() );
-            writer.WriteAttributeString( "column", _column.ToString() );
+            writer.WriteAttributeString( "row", _location.Row.ToString() );
+            writer.WriteAttributeString( "column", _location.Column.ToString() );
 
             SerializeToXml( writer );
 
@@ -147,16 +143,15 @@ namespace Droppy.Data
 
         protected abstract void DeserializeFromXml( XmlReader reader );
 
-        
 
-        private int                     _row;
-        private int                     _column;
+
+        private MatrixLoc               _location;
         private WidgetContainerData     _parent;
 
         [NonSerialized]
         private bool                    _isDirty;
 
         [NonSerialized]
-        private EventHandler             _isDirtyChangedEvent;
+        private EventHandler            _isDirtyChangedEvent;
     }
 }

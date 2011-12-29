@@ -2,6 +2,7 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:Droppy"
+        xmlns:local_ui="clr-namespace:Droppy.UI"
         Title="MainWindow" ResizeMode="NoResize" SizeToContent="WidthAndHeight"
         WindowStartupLocation="CenterScreen" WindowStyle="None" Background="Transparent" AllowsTransparency="True">
     <Border CornerRadius="8" Background="{DynamicResource MainWindowBackground}">
@@ -10,11 +11,43 @@
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
                 <RowDefinition Height="Auto"/>
-            </Grid.RowDefinitions>            
-            <Border Background="{DynamicResource MainWindowTitleBarBrush}" Height="28"
-                    Grid.Row="0" CornerRadius="8" Margin="0,0,0,5"/>
+            </Grid.RowDefinitions>
+			
+            <Border Background="{DynamicResource MainWindowTitleBarBrush}"
+                    Height="28" Grid.Row="0" Margin="0,0,0,5" CornerRadius="8,8,8,8" >
+            	<DockPanel LastChildFill="False" Margin="3,0">
+                    <Button Name="ToolsHdrButton" Style="{DynamicResource MainWindowHeaderButton}" DockPanel.Dock="Left"
+                            Click="OnToolsBtnClick" ContextMenuService.IsEnabled="False">
+                        <Image Source="{StaticResource ToolsIconSource}" Stretch="None" />
+                        
+                        <Button.ContextMenu>
+                            <ContextMenu Name="ToolsMenu" Placement="Bottom" Style="{StaticResource ContextMenuStyle}">
+                                <MenuItem Header="Export Configuration..." Click="OnExportMenuItemClick">
+                                    <MenuItem.Icon>
+                                        <Rectangle Fill="{StaticResource ExportIconBrush}" Width="16" Height="16"/>
+                                    </MenuItem.Icon>
+                                </MenuItem>
+                                <MenuItem Header="Import Configuration..." Click="OnImportMenuItemClick">
+                                    <MenuItem.Icon>
+                                        <Rectangle Fill="{StaticResource ImportIconBrush}" Width="16" Height="16"/>
+                                    </MenuItem.Icon>
+                                </MenuItem>
+                                <MenuItem Header="Test" Click="OnTestMenuItemClick" />
+                            </ContextMenu>
+                        </Button.ContextMenu>
+                        
+                    </Button>
+                    <Button Name="CloseHdrButton" Style="{DynamicResource MainWindowHeaderButton}" DockPanel.Dock="Right"
+                            Click="OnCloseBtnClick">
+                        <Image Source="{StaticResource CloseIconSource}" Stretch="None"/>
+                    </Button>
+                    
+                </DockPanel>
+            </Border>
 
-            <local:WidgetMatrix Grid.Row="1" x:Name="widgetContainer" HorizontalAlignment="Left" VerticalAlignment="Top" />
+            <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Hidden" >
+                <local:WidgetMatrix x:Name="widgetContainer" HorizontalAlignment="Left" VerticalAlignment="Top" />
+            </ScrollViewer>
 
             <local:ResizeBarControl x:Name="Resizer" Grid.Row="2" Margin="0,5,0,0"/>
 

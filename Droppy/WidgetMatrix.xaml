@@ -6,6 +6,6 @@
              xmlns:local="clr-namespace:Droppy"
              mc:Ignorable="d" 
              d:DesignHeight="300" d:DesignWidth="300">
-    <Grid Name="matrixPanel" AllowDrop="True" Background="Transparent">
+    <Grid Name="matrixPanel" AllowDrop="True" Background="Transparent" VerticalAlignment="Top">
     </Grid>
 </UserControl>

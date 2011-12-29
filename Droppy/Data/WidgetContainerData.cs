@@ -9,19 +9,6 @@ using System.Xml.Serialization;
 
 namespace Droppy.Data
 {
-    public struct WidgetContainerKey
-    {
-        public WidgetContainerKey( int r, int c )
-        {
-            row = r;
-            column = c;
-        }
-
-        public int row;
-        public int column;
-    }
-
-
     [Flags]
     public enum WidgetContainerResizeJustify
     {
@@ -31,17 +18,14 @@ namespace Droppy.Data
         Bottom  = 0x02
     }
 
-    
-
-
-
     public class WidgetContainerChangedEventArgs : EventArgs
     {
-        public WidgetContainerChangedEventArgs( NotifyCollectionChangedAction action, int row,
-                                                int column, WidgetData oldWidget, WidgetData newWidget )
+        public WidgetContainerChangedEventArgs( NotifyCollectionChangedAction   action,
+                                                MatrixLoc                       location,
+                                                WidgetData                      oldWidget,
+                                                WidgetData                      newWidget )
         {
-            _row = row;
-            _column = column;
+            _location = location;
             _action = action;
             _oldWidget = oldWidget;
             _newWidget = newWidget;
@@ -50,27 +34,19 @@ namespace Droppy.Data
         public NotifyCollectionChangedAction Action { get { return _action; } }
         public WidgetData OldWidget { get { return _oldWidget; } }
         public WidgetData NewWidget { get { return _newWidget; } }
-        public int Row { get { return _row; } }
-        public int Column { get { return _column; } }
+        public MatrixLoc Location { get { return _location; } }
 
         private NotifyCollectionChangedAction   _action;
-        private int                             _row;
-        private int                             _column;
+        private MatrixLoc                       _location;
         private WidgetData                      _oldWidget;
         private WidgetData                      _newWidget;
     }
 
     public delegate void WidgetContainerChangedEventHandler( object sender, WidgetContainerChangedEventArgs e );
 
-    public interface INotifyWidgetContainerChanged
-    {
-        event WidgetContainerChangedEventHandler ContainerChanged;
-    }
-
 
     [Serializable]
-    public class WidgetContainerData : WidgetData,
-                                       INotifyWidgetContainerChanged
+    public class WidgetContainerData : WidgetData
     {
         public WidgetContainerData()
         {
@@ -78,21 +54,24 @@ namespace Droppy.Data
 
         public WidgetContainerData( int numRows, int numColumns )
         {
-            _widgetArray = new WidgetData[ numRows, numColumns ];
+            _widgetArray = new  Array2D<WidgetData>( numRows, numColumns );
+            _containerBounds.Size = _widgetArray.Size;
         }
 
-        public int ColumnCount { get { return _widgetArray != null ? _widgetArray.GetLength( 1 ) : 0; } }
+        public MatrixRect Bounds { get { return _containerBounds; } }
 
-        public int RowCount { get { return _widgetArray != null ? _widgetArray.GetLength( 0 ) : 0; } }
+        public MatrixSize Size { get { return this.Bounds.Size; } }
 
-        public int FirstRow { get { return _firstRowIndex; } }
+        //public WidgetData this[ int row, int column ]
+        //{
+        //    get { return this[ new MatrixLoc( row, column ) ]; }
+        //    set { this[ new MatrixLoc( row, column ) ] = value; }
+        //}
 
-        public int FirstColumn { get { return _firstColumnIndex; } }
-
-        public WidgetData this[ int row, int column ]
+        public WidgetData this[ MatrixLoc location ]
         {
-            get { return _widgetArray[ row - _firstRowIndex, column - _firstColumnIndex ]; }
-            set { SetWidget( row, column, value ); }
+            get { return _widgetArray[ _containerBounds.ToIndex( location ) ]; }
+            set { SetWidget( location, value ); }
         }
 
         public event WidgetContainerChangedEventHandler  ContainerChanged
@@ -107,63 +86,56 @@ namespace Droppy.Data
             remove { _containerResizedEvent -= value; }
         }
 
-
         public void Resize( int numRows, int numColumns, WidgetContainerResizeJustify justify )
         {
-            if( numRows > 256 || numColumns > 256 )
+            Resize( new MatrixSize( numRows, numColumns ), justify );
+        }
+
+        public void Resize( MatrixSize newSize, WidgetContainerResizeJustify justify )
+        {
+            if( newSize.RowCount > 256 || newSize.ColumnCount > 256 )
             {
-                throw new ApplicationException( string.Format( "Attemp to allocate too much ({0} x {1})", numRows, numColumns ) );
+                throw new ApplicationException( string.Format( "Attemp to allocate too much ({0} x {1})",
+                                                               newSize.RowCount, newSize.ColumnCount ) );
             }
-            else if( numRows == RowCount && numColumns == ColumnCount )
+            else if( newSize == this.Bounds.Size )
             {
                 return;
             }
 
             Validate();
 
-            int currentNumRows = this.RowCount;
-            int currentNumColumns = this.ColumnCount;
-            int shiftRows = ( justify.HasFlag( WidgetContainerResizeJustify.Bottom ) ? numRows - currentNumRows : 0 );
-            int shiftColumns = ( justify.HasFlag( WidgetContainerResizeJustify.Right ) ? numColumns - currentNumColumns : 0 );
-            int r, rFirst, rMax, c, cFirst, cMax;
+            MatrixSize currentSize = this.Size;
+            MatrixSize originShift = currentSize - newSize;
 
-            if( shiftRows < 0 )
-            {
-                rFirst = -shiftRows;
-                rMax = currentNumRows;
-            }
-            else
-            {
-                rFirst = 0;
-                rMax = Math.Min( currentNumRows, numRows );
-            }
+            if( !justify.HasFlag( WidgetContainerResizeJustify.Bottom ) ) originShift.RowCount = 0;
+            if( !justify.HasFlag( WidgetContainerResizeJustify.Right ) ) originShift.ColumnCount = 0;
 
-            if( shiftColumns < 0 )
-            {
-                cFirst = -shiftColumns;
-                cMax = currentNumColumns;
-            }
-            else
-            {
-                cFirst = 0;
-                cMax = Math.Min( currentNumColumns, numColumns );
-            }
+            MatrixRect newContainerBounds = new MatrixRect( 
+                            _containerBounds.Location + originShift, newSize );
+            
+            // Cells in the intersection of original bounding rectangle and the new bounding
+            // rectangle are the ones that will survive the resize operation. Once we identify
+            // the intersection of the two rectangles, we need to iterate through the original
+            // array and copy those cells into the new array
+            MatrixRect existingCellBounds = _containerBounds.Intersect( newContainerBounds );
 
-            WidgetData[,] newArray = new WidgetData[ numRows, numColumns ];
+            // normalize existing cell bounding box around 0-based arrays. 
+            existingCellBounds.Location = 
+                    new MatrixLoc( originShift.RowCount > 0 ? originShift.RowCount : 0,
+                                   originShift.ColumnCount > 0 ? originShift.ColumnCount : 0 );
 
-            for( r = rFirst ; r < rMax; r++ )
+            Array2D< WidgetData > newArray = new Array2D<WidgetData>( newSize );
+
+            foreach( var loc in existingCellBounds )
             {
-                for( c = cFirst; c < cMax; c++ )
-                {
-                    newArray[ r + shiftRows, c + shiftColumns ] = _widgetArray[ r, c ];
-                }
+                newArray[ loc - originShift ] = _widgetArray[ loc ];
             }
-
+                
             _widgetArray = newArray;
-            _firstRowIndex -= shiftRows;
-            _firstColumnIndex -= shiftColumns;
+            _containerBounds = newContainerBounds;
 
-            IsDirty = true;
+            this.IsDirty = true;
 
             Validate();
 
@@ -176,9 +148,9 @@ namespace Droppy.Data
         {
             if( widget.Parent == this )
             {
-                if( this[ widget.Row, widget.Column ] == widget )
+                if( this[ widget.Location ] == widget )
                 {
-                    this[ widget.Row, widget.Column ] = null;
+                    this[ widget.Location ] = null;
                 }
                 else
                 {
@@ -192,35 +164,47 @@ namespace Droppy.Data
 
         public override void ClearDirtyFlag( bool includeChildren )
         {
-            base.ClearDirtyFlag(includeChildren);
+            base.ClearDirtyFlag( includeChildren );
 
             if( includeChildren )
             {
-                IterateChildren( null, (r,c,w,o) => { if( w != null ) w.ClearDirtyFlag( true ); } ); 
+                IterateChildren( ( loc, widget ) =>
+                { 
+                    if( widget != null ) widget.ClearDirtyFlag( true );
+                } ); 
             }
         }
 
         public override void PostDeserialize()
         {
-            IterateChildren( null, (r,c,w,o) => {
-                if( w != null )
+            var widgetArraySize = _widgetArray.Size;
+
+            if( _containerBounds.Size != widgetArraySize )
+            {
+                _containerBounds.Location = new MatrixLoc();
+                _containerBounds.Size = widgetArraySize;
+            }
+
+            IterateChildren( ( loc, widget ) =>
+            {
+                if( widget != null )
                 {
                     // If something went horribly wrong and this object ended up with some child
                     // that doesn't actually belong to it, let's erase it now after deserialization
-                    if( w.Parent != this )
+                    if( widget.Parent != this )
                     {
-                        this[ r, c ] = null;
+                        this[ loc ] = null;
                     }
                     else
                     {
-                        w.SetOwner( this, r, c );
+                        widget.SetOwner( this, loc );
 
-                        w.PostDeserialize();
+                        widget.PostDeserialize();
 
                         // just in case the subscription is already set up, let's try to kill it.
                         // if it is not setup, the "-=" won't have any effect
-                        w.IsDirtyChanged -= OnChildIsDirtyChanged;
-                        w.IsDirtyChanged += OnChildIsDirtyChanged;
+                        widget.IsDirtyChanged -= OnChildIsDirtyChanged;
+                        widget.IsDirtyChanged += OnChildIsDirtyChanged;
                     }
                 }
             } );
@@ -228,36 +212,37 @@ namespace Droppy.Data
 
         public void Validate()
         {
-            IterateChildren( null, (r,c,w,o) => {
-                System.Diagnostics.Debug.Assert( w == null || ( w.Parent == this && w.Row == r && w.Column == c ) );
+            IterateChildren( ( loc, widget ) =>
+            {
+                System.Diagnostics.Debug.Assert( 
+                    widget == null || ( widget.Parent == this && widget.Location == loc ) );
             } );
         }
 
-
-        protected virtual void OnWidgetAdded( int row, int column, WidgetData widget )
+        protected virtual void OnWidgetAdded( MatrixLoc location, WidgetData widget )
         {
             if( _containerChangedEvent != null )
             {
                 _containerChangedEvent( this, new WidgetContainerChangedEventArgs(
-                                        NotifyCollectionChangedAction.Add, row, column, null, widget ) );
+                                        NotifyCollectionChangedAction.Add, location, null, widget ) );
             }
         }
 
-        protected virtual void OnWidgetReplaced( int row, int column, WidgetData oldWidget, WidgetData newWidget )
+        protected virtual void OnWidgetReplaced( MatrixLoc location, WidgetData oldWidget, WidgetData newWidget )
         {
             if( _containerChangedEvent != null )
             {
                 _containerChangedEvent( this, new WidgetContainerChangedEventArgs(
-                                        NotifyCollectionChangedAction.Replace, row, column, oldWidget, newWidget ) );
+                                        NotifyCollectionChangedAction.Replace, location, oldWidget, newWidget ) );
             }
         }
 
-        protected virtual void OnWidgetRemoved( int row, int column, WidgetData widget )
+        protected virtual void OnWidgetRemoved( MatrixLoc location, WidgetData widget )
         {
             if( _containerChangedEvent != null )
             {
                 _containerChangedEvent( this, new WidgetContainerChangedEventArgs(
-                                        NotifyCollectionChangedAction.Remove, row, column, widget, null ) );
+                                        NotifyCollectionChangedAction.Remove, location, widget, null ) );
             }
         }
 
@@ -273,22 +258,22 @@ namespace Droppy.Data
         {
             bool    bChildrenWritten = false;
 
-            writer.WriteAttributeString( "firstRow", _firstRowIndex.ToString() );
-            writer.WriteAttributeString( "firstColumn", _firstColumnIndex.ToString() );
-            writer.WriteAttributeString( "rowCount", RowCount.ToString() );
-            writer.WriteAttributeString( "columnCount", ColumnCount.ToString() );
+            writer.WriteAttributeString( "firstRow", _containerBounds.Row.ToString() );
+            writer.WriteAttributeString( "firstColumn", _containerBounds.Column.ToString() );
+            writer.WriteAttributeString( "rowCount", _containerBounds.RowCount.ToString() );
+            writer.WriteAttributeString( "columnCount", _containerBounds.ColumnCount.ToString() );
 
-            IterateChildren( null, (r,c,w,o) => {
-                if( w != null )
+            IterateChildren( ( loc, widget ) =>
+            {
+                if( widget == null ) return;
+
+                if( !bChildrenWritten )
                 {
-                    if( !bChildrenWritten )
-                    {
-                        writer.WriteStartElement( "Children" );
-                        bChildrenWritten = true;
-                    }
-
-                    ( (IXmlSerializable)w ).WriteXml( writer );
+                    writer.WriteStartElement( "Children" );
+                    bChildrenWritten = true;
                 }
+
+                ( (IXmlSerializable)widget ).WriteXml( writer );
             } );
 
             if( bChildrenWritten )
@@ -299,14 +284,14 @@ namespace Droppy.Data
 
         protected override void DeserializeFromXml( XmlReader reader )
         {
-            int rows, columns;
+            _containerBounds.Row = XmlConvert.ToInt32( reader.GetAttribute( "firstRow" ) );
+            _containerBounds.Column = XmlConvert.ToInt32( reader.GetAttribute( "firstColumn" ) );
 
-            _firstRowIndex = XmlConvert.ToInt32( reader.GetAttribute( "firstRow" ) );
-            _firstColumnIndex = XmlConvert.ToInt32( reader.GetAttribute( "firstColumn" ) );
-            rows = XmlConvert.ToInt32( reader.GetAttribute( "rowCount" ) );
-            columns = XmlConvert.ToInt32( reader.GetAttribute( "columnCount" ) );
+            MatrixSize size = new MatrixSize( 
+                                    XmlConvert.ToInt32( reader.GetAttribute( "rowCount" ) ),
+                                    XmlConvert.ToInt32( reader.GetAttribute( "columnCount" ) ) );
 
-            Resize( rows, columns, 0 );
+            Resize( size, 0 );
 
             if( !reader.Read() ) return;
 
@@ -323,7 +308,7 @@ namespace Droppy.Data
                             if( reader.NodeType == XmlNodeType.Element )
                             {
                                 WidgetData widget = WidgetData.Create( reader );
-                                this[ widget.Row, widget.Column ] = widget;
+                                this[ widget.Location ] = widget;
                             }
                             else
                             {
@@ -346,11 +331,12 @@ namespace Droppy.Data
         }
 
 
-        private WidgetData ClearWidget( int row, int column )
+        private WidgetData ClearWidget( MatrixLoc loc )
         {
-            WidgetData widget = _widgetArray[ row - _firstRowIndex, column - _firstColumnIndex ];
+            MatrixLoc   arrayIndex = _containerBounds.ToIndex( loc );
+            WidgetData  widget = _widgetArray[ arrayIndex ];
 
-            _widgetArray[ row - _firstRowIndex, column - _firstColumnIndex ] = null;
+            _widgetArray[ arrayIndex ] = null;
 
             if( widget != null )
             {
@@ -361,49 +347,34 @@ namespace Droppy.Data
             return widget;
         }
 
-        private void SetWidget( int row, int column, WidgetData widget )
+        private void SetWidget( MatrixLoc location, WidgetData widget )
         {
-            int                             numRows = this.RowCount;
-            int                             numColumns = this.ColumnCount;
-            WidgetContainerResizeJustify    resizeJustify = 0;
-            WidgetData                      removedWidget = null;
+            WidgetData  removedWidget = null;
 
             Validate();
 
             // the same widget is being inserted at the same spot where it is already located,
             // let not do anything and just exit
-            if( widget != null && widget.Parent == this && widget.Row == row && widget.Column == column ) return;
+            if( widget != null && widget.Parent == this && widget.Location == location ) return;
 
-            if( row < _firstRowIndex )
-            {
-                numRows += _firstRowIndex - row;
-                resizeJustify |= WidgetContainerResizeJustify.Bottom;
-            }
-            else if( row > _firstRowIndex + numRows )
-            {
-                numRows = row - _firstRowIndex;
-            }
-
-            if( column < _firstColumnIndex )
-            {
-                numColumns += _firstColumnIndex - column;
-                resizeJustify |= WidgetContainerResizeJustify.Right;
-            }
-            else if( column > _firstColumnIndex + numColumns )
-            {
-                numColumns = column - _firstColumnIndex;
-            }
+            MatrixRect neededBounds = _containerBounds.GrowTo( location );
 
             // If the cell being modified within the bounds of the current array, let's make sure
             // the existing cell is empty.  Otherwise, we need to reallocate the array before 
             // we can assign the widget to it.
-            if( numRows == this.RowCount && numColumns == this.ColumnCount )
+            if( neededBounds.Size == _containerBounds.Size )
             {
-                removedWidget = ClearWidget( row, column );
+                removedWidget = ClearWidget( location );
             }
             else if( widget != null )
             {
-                Resize( numRows, numColumns, resizeJustify );
+                WidgetContainerResizeJustify resizeJustify =
+                    ( _containerBounds.Row == neededBounds.Row ?
+                            WidgetContainerResizeJustify.Top : WidgetContainerResizeJustify.Bottom ) |
+                    ( _containerBounds.Column == neededBounds.Column ?
+                            WidgetContainerResizeJustify.Left : WidgetContainerResizeJustify.Right );
+
+                Resize( neededBounds.Size, resizeJustify );
             }
 
             Validate();
@@ -415,25 +386,25 @@ namespace Droppy.Data
                     widget.Parent.Remove( widget );
                 }
 
-                _widgetArray[ row - _firstRowIndex, column - _firstColumnIndex ] = widget;
+                _widgetArray[ _containerBounds.ToIndex( location ) ] = widget;
 
-                widget.SetOwner( this, row, column );
+                widget.SetOwner( this, location );
                 widget.IsDirtyChanged += OnChildIsDirtyChanged;
 
                 if( removedWidget != null )
                 {
-                    OnWidgetReplaced( row, column, removedWidget, widget );
+                    OnWidgetReplaced( location, removedWidget, widget );
                     removedWidget = null;
                 }
                 else
                 {
-                    OnWidgetAdded( row, column, widget );
+                    OnWidgetAdded( location, widget );
                 }
             }
 
             if( removedWidget != null )
             {
-                OnWidgetRemoved( row, column, removedWidget );
+                OnWidgetRemoved( location, removedWidget );
             }
 
             Validate();
@@ -451,25 +422,18 @@ namespace Droppy.Data
             }
         }
 
-        private void IterateChildren( object userData, IterateChildenDelegate callback )
+        private void IterateChildren( IterateChildenDelegate callback )
         {
-            int rows = RowCount;
-            int columns = ColumnCount;
-
-            for( int r = 0; r < rows; r++ )
+            foreach( var loc in _containerBounds )
             {
-                for( int c = 0; c < columns; c++ )
-                {
-                    callback( r + _firstRowIndex, c + _firstColumnIndex, _widgetArray[ r, c ], userData );
-                }
+                callback( loc, this[ loc ] );
             }
         }
 
-        private delegate void IterateChildenDelegate( int row, int col, WidgetData widget, object userData );
+        private delegate void IterateChildenDelegate( MatrixLoc location, WidgetData widget );
 
-        private int             _firstRowIndex;
-        private int             _firstColumnIndex;
-        private WidgetData[,]   _widgetArray;
+        private MatrixRect              _containerBounds;
+        private Array2D< WidgetData >   _widgetArray;
 
         [NonSerialized]
         private WidgetContainerChangedEventHandler  _containerChangedEvent;

@@ -72,7 +72,7 @@ namespace Droppy
                                     _glyphTypeface.CharacterToGlyphMap[ '.' ] ] * fontSize * 3;
             totalWidth = ellipsesWidth;
 
-            if( availableWidth <= totalWidth ) str = "";
+            if( availableWidth <= totalWidth ) str = string.Empty;
 
             lastSlashPos = str.LastIndexOf( '\\' );
             if( lastSlashPos == -1 ) lastSlashPos = str.Length;
