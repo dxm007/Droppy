@@ -80,7 +80,7 @@ namespace Droppy
 
         public static readonly DependencyProperty IsDragOverProperty = 
                     DependencyProperty.RegisterAttached( "IsDragOver", typeof( bool ), typeof( DropHelper ),
-                                                         new FrameworkPropertyMetadata(  false )             );
+                                                         new FrameworkPropertyMetadata( false )              );
 
         public static void SetIsDragOver( UIElement element, bool value )
         {
@@ -94,10 +94,77 @@ namespace Droppy
 
         #endregion
 
+        #region - - - - - - - - - DragStarted Attached Event  - - - - - - - - - - - - - - - -
 
-        public event EventHandler< DropHelperEventArgs > QueryDragDataValid;
-        public event EventHandler< DropHelperEventArgs > TargetDrop;
-        public event EventHandler< DropHelperEventArgs > RealTargetDragLeave;
+        public static readonly RoutedEvent DragStartedEvent =
+                    EventManager.RegisterRoutedEvent( "DragStarted", RoutingStrategy.Bubble,
+                                                      typeof( RoutedEventHandler ), typeof( DropHelper ) );
+
+        public static void AddDragStartedHandler( DependencyObject      dependencyObject,
+                                                  RoutedEventHandler    eventHandler      )
+        {
+            if( dependencyObject is UIElement )
+            {
+                ( (UIElement)dependencyObject ).AddHandler( DragStartedEvent, eventHandler );
+            }
+            else if( dependencyObject is ContentElement )
+            {
+                ( (ContentElement)dependencyObject ).AddHandler( DragStartedEvent, eventHandler );
+            }
+        }
+
+        public static void RemoveDragStartedHandler( DependencyObject       dependencyObject,
+                                                     RoutedEventHandler     eventHandler      )
+        {
+            if( dependencyObject is UIElement )
+            {
+                ( (UIElement)dependencyObject ).RemoveHandler( DragStartedEvent, eventHandler );
+            }
+            else if( dependencyObject is ContentElement )
+            {
+                ( (ContentElement)dependencyObject ).RemoveHandler( DragStartedEvent, eventHandler );
+            }
+        }
+
+        #endregion
+
+        #region - - - - - - - - - DragStopped Attached Event  - - - - - - - - - - - - - - - -
+
+        public static readonly RoutedEvent DragStoppedEvent =
+                    EventManager.RegisterRoutedEvent( "DragStopped", RoutingStrategy.Bubble,
+                                                      typeof( RoutedEventHandler ), typeof( DropHelper ) );
+
+        public static void AddDragStoppedHandler( DependencyObject      dependencyObject,
+                                                  RoutedEventHandler    eventHandler      )
+        {
+            if( dependencyObject is UIElement )
+            {
+                ( (UIElement)dependencyObject ).AddHandler( DragStoppedEvent, eventHandler );
+            }
+            else if( dependencyObject is ContentElement )
+            {
+                ( (ContentElement)dependencyObject ).AddHandler( DragStoppedEvent, eventHandler );
+            }
+        }
+
+        public static void RemoveDragStoppedHandler( DependencyObject dependencyObject,
+                                                     RoutedEventHandler eventHandler )
+        {
+            if( dependencyObject is UIElement )
+            {
+                ( (UIElement)dependencyObject ).RemoveHandler( DragStoppedEvent, eventHandler );
+            }
+            else if( dependencyObject is ContentElement )
+            {
+                ( (ContentElement)dependencyObject ).RemoveHandler( DragStoppedEvent, eventHandler );
+            }
+        }
+
+        #endregion
+
+        public event EventHandler< DropHelperEventArgs >    QueryDragDataValid;
+        public event EventHandler< DropHelperEventArgs >    TargetDrop;
+        public event EventHandler< DropHelperEventArgs >    RealTargetDragLeave;
 
         protected virtual void OnTargetDragEnter(object sender, DragEventArgs e)
         {
@@ -105,15 +172,28 @@ namespace Droppy
 
             OnQueryDragDataValid( sender, e );
 
-            if( e.Effects != DragDropEffects.None && !_isDragOverSignalled )
+            if( !_isDragStartedSignalled )
             {
-                SetIsDragOver( _target, true );
-                _isDragOverSignalled = true;
+                _target.RaiseEvent( new RoutedEventArgs( DragStartedEvent ) );
+                _isDragStartedSignalled = true;
+            }
+
+            if( e.Effects != DragDropEffects.None )
+            {
+                e.Handled = true;
+
+                if( !_isDragOverSignalled )
+                {
+                    SetIsDragOver( _target, true );
+                    _isDragOverSignalled = true;
+                }
             }
         }
 
         protected virtual void OnTargetDragLeave(object sender, DragEventArgs e)
         {
+            if( _isDragOverSignalled ) e.Handled = true; 
+            
             _dragInProgress = false;
 
             // It appears there's a quirk in the drag/drop system.  While the user is dragging the object
@@ -128,6 +208,8 @@ namespace Droppy
 
         protected virtual void OnTargetDragOver(object sender, DragEventArgs e)
         {
+            if( _isDragOverSignalled ) e.Handled = true;
+
             _dragInProgress = true;
 
             OnQueryDragDataValid( sender, e );
@@ -135,22 +217,21 @@ namespace Droppy
 
         protected virtual void OnTargetDrop(object sender, DragEventArgs e)
         {
-            if( TargetDrop != null )
-            {
-                TargetDrop( this, new DropHelperEventArgs( sender, e ) );
-            }
-
             if( _isDragOverSignalled )
             {
-                _isDragOverSignalled = false;
-                SetIsDragOver( _target, false );
+                e.Handled = true;
+
+                if( TargetDrop != null )
+                {
+                    TargetDrop( this, new DropHelperEventArgs( sender, e ) );
+                }
             }
+
+            FinalizeTargetDrag();
         }
 
         protected virtual void OnQueryDragDataValid( object sender, DragEventArgs eventArgs )
         {
-            eventArgs.Handled = true;
-
             if( QueryDragDataValid != null )
             {
                 QueryDragDataValid( this, new DropHelperEventArgs( sender, eventArgs ) );
@@ -164,6 +245,17 @@ namespace Droppy
                 RealTargetDragLeave( this, new DropHelperEventArgs( sender, eventArgs ) );
             }
 
+            FinalizeTargetDrag();
+        }
+
+        private void FinalizeTargetDrag()
+        {
+            if( _isDragStartedSignalled )
+            {
+                _isDragStartedSignalled = false;
+                _target.RaiseEvent( new RoutedEventArgs( DragStoppedEvent ) );
+            }
+
             if( _isDragOverSignalled )
             {
                 _isDragOverSignalled = false;
@@ -175,6 +267,7 @@ namespace Droppy
         private UIElement           _target;
         private bool                _dragInProgress;
         private bool                _isDragOverSignalled;
+        private bool                _isDragStartedSignalled;
     }
 
 

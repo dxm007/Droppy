@@ -41,7 +41,22 @@ namespace Droppy
             this.Closing += OnClosing;
         }
 
-        void OnClosing(object sender, System.ComponentModel.CancelEventArgs e)
+        public static MainWindow GetWindow( DependencyObject dependencyObject )
+        {
+            return (MainWindow)Window.GetWindow( dependencyObject );
+        }
+
+        public void FreezeAutoHide()
+        {
+            _windowAutoHider.Freeze();
+        }
+
+        public void UnfreezeAutoHide()
+        {
+            _windowAutoHider.Unfreeze();
+        }
+
+        private void OnClosing( object sender, System.ComponentModel.CancelEventArgs e )
         {
             if( _windowData.Document.IsDirty )
             {
@@ -49,12 +64,19 @@ namespace Droppy
             }
         }
 
-        private void MainWindow_Loaded(object sender, RoutedEventArgs e)
+        private void MainWindow_Loaded( object sender, RoutedEventArgs e )
         {
-            new WindowMover( this );
             new TrashCanPopupManager( this, _windowData );
 
+            IWindowMover windowMover = new WindowMover( this );
+
             _windowResizer = new MainWindowResizer( this, _windowData );
+
+            IWindowDocker docker = new WindowDocker( this, windowMover );
+
+            _windowAutoHider = new WindowAutoHider( this );
+
+            new MainWindowDockCoordinator( this, _windowAutoHider, docker );
         }
 
         private void OnToolsBtnClick( object sender, RoutedEventArgs e )
@@ -178,6 +200,7 @@ namespace Droppy
 
         private MainWindowData      _windowData;
         private MainWindowResizer   _windowResizer;
+        private IWindowAutoHider    _windowAutoHider;
     }
 
 
@@ -315,8 +338,13 @@ namespace Droppy
             _windowData = windowData;
 
             // Parent window starts off being auto-sized based on its content. We must make this call 
-            // in order to enable resizing of the parent.
-            EnableManualSizingOnParent();
+            // in order to enable resizing of the parent. However, we want to change the attribute only
+            // after the window initialization is complete.  Otherwise, instead of the center of the
+            // screen, the window shows up in the corner.
+            _parent.Dispatcher.BeginInvoke( new Action( () =>
+            {
+                SetManualSizingOnParent();
+            } ) );
 
             ResizeBarControl resizer = (ResizeBarControl)_parent.FindName( "Resizer" );
 
@@ -328,16 +356,14 @@ namespace Droppy
 
         public void SizeParentToContent()
         {
-            _parent.SizeToContent = System.Windows.SizeToContent.WidthAndHeight;
+            SetAutoSizingOnParent();
 
-            _parent.ClearValue( Window.WidthProperty );
-            _parent.ClearValue( Window.HeightProperty );
             _parent.widgetContainer.MinHeight = 0;
             _parent.widgetContainer.MinWidth = 0;
 
             _parent.UpdateLayout();
 
-            _parent.SizeToContent = System.Windows.SizeToContent.Manual;
+            SetManualSizingOnParent();
         }
 
         private void OnResizeStarted( ResizeBarEventArgs e )
@@ -412,14 +438,20 @@ namespace Droppy
             _parent.Height = newHeight;
         }
 
-        private void EnableManualSizingOnParent()
+        private void SetAutoSizingOnParent()
         {
-            // Change the attribute once window initialization is complete.  Otherwise, instead of the
-            // center of the screen, the window shows up in the corner.
-            _parent.Dispatcher.BeginInvoke( new Action( () =>
-            {
-                _parent.SizeToContent = SizeToContent.Manual;
-            } ) );
+            _parent.SizeToContent = System.Windows.SizeToContent.WidthAndHeight;
+
+            _parent.ClearValue( Window.WidthProperty );
+            _parent.ClearValue( Window.HeightProperty );
+        }
+
+        private void SetManualSizingOnParent()
+        {
+            _parent.Width = _parent.ActualWidth;
+            _parent.Height = _parent.ActualHeight;
+
+            _parent.SizeToContent = SizeToContent.Manual;
         }
 
         private Size CalculateSiteCellSize()

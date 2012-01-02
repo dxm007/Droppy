@@ -36,15 +36,26 @@ namespace Droppy
 
         protected override void OnClick( object sender, RoutedEventArgs e )
         {
+            MainWindow  parentWindow = MainWindow.GetWindow( this );
+
             var dlg = new System.Windows.Forms.FolderBrowserDialog();
 
             dlg.Description = "Select a folder";
             dlg.ShowNewFolderButton = true;
 
-            if( dlg.ShowDialog( new Win32Window( this ) ) !=
-                                        System.Windows.Forms.DialogResult.OK ) return;
+            parentWindow.FreezeAutoHide();
 
-            Site.SetWidget( new Data.FolderWidgetData() { Path = dlg.SelectedPath } );
+            try
+            {
+                if( dlg.ShowDialog( new Win32Window( parentWindow ) ) !=
+                                            System.Windows.Forms.DialogResult.OK ) return;
+
+                Site.SetWidget( new Data.FolderWidgetData() { Path = dlg.SelectedPath } );
+            }
+            finally
+            {
+                parentWindow.UnfreezeAutoHide();
+            }
         }
 
         private void OnDrop( object sender, FileDropEventArgs e )
@@ -108,20 +119,18 @@ namespace Droppy
                 FileDrop( this, new FileDropEventArgs( (FrameworkElement)Target, IsMove( e ), files ) );
             }
 
-            e.Handled = true;
+            base.OnTargetDrop( sender, e );
         }
 
         protected override void OnQueryDragDataValid( object sender, DragEventArgs eventData )
         {
             string[] files = eventData.Data.GetData( "FileDrop" ) as string[];
 
+            eventData.Effects = DragDropEffects.None;
+
             if( files == null ) return;
 
-            if( !_allowMultipleFiles && files.Length > 1 )
-            {
-                eventData.Effects = DragDropEffects.None;
-            }
-            else
+            if( _allowMultipleFiles || files.Length == 1 )
             {
                 eventData.Effects = IsMove( eventData ) ? DragDropEffects.Move : DragDropEffects.Copy ;
             }

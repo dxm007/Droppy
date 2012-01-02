@@ -274,7 +274,10 @@ namespace Droppy
         {
             base.OnQueryDragDataValid( sender, e );
 
-            ProcessDataObject( e, UpdateMatrixUI );
+            if( ProcessDataObject( e, UpdateMatrixUI ) )
+            {
+                e.Handled = true;
+            }
         }
 
         protected override void OnTargetDrop(object sender, DragEventArgs e)
@@ -286,46 +289,50 @@ namespace Droppy
 
         protected override void OnRealTargetDragLeave(object sender, DragEventArgs e)
         {
+            base.OnRealTargetDragLeave( sender, e );
+
             CancelMove();
         }
 
 
         private delegate void ProcessDataObjectDelegate( MatrixLoc insertLoc, WidgetSiteDragDropData data );
 
-        private void ProcessDataObject( DragEventArgs eventArgs, ProcessDataObjectDelegate callback )
+        private bool ProcessDataObject( DragEventArgs eventArgs, ProcessDataObjectDelegate callback )
         {
             WidgetSiteDragDropData data = eventArgs.Data.GetData( "Droppy.WidgetSiteDragDropData" ) as WidgetSiteDragDropData;
 
             if( data == null )
             {
                 eventArgs.Effects = DragDropEffects.None;
+
+                return false;
+            }
+
+            Point   pt = eventArgs.GetPosition( this.Target ) - 
+                                    new Vector( data.DraggableOffset.X, data.DraggableOffset.Y );
+            Rect    dragRect =  new Rect( pt, new Size( data.Site.ActualWidth + data.Site.Margin.Width(),
+                                                        data.Site.ActualHeight + data.Site.Margin.Height() ) );
+            Point   dragCenter = new Point( dragRect.X + dragRect.Width / 2,
+                                            dragRect.Y + dragRect.Height / 2 );
+
+            MatrixLoc insertIndex = new MatrixLoc(
+                        (int)( ( dragCenter.Y + dragRect.Height ) / dragRect.Height ) - 1,
+                        (int)( ( dragCenter.X + dragRect.Width  ) / dragRect.Width  ) - 1  );
+
+            MatrixLoc insertLoc = _controlData.Source.Bounds.ToLocation( insertIndex );
+
+            if( _controlData.Source.Bounds.Contains( insertLoc ) )
+            {
+                eventArgs.Effects = DragDropEffects.Move;
+
+                callback( insertLoc, data );
             }
             else
             {
-                Point   pt = eventArgs.GetPosition( this.Target ) - 
-                                        new Vector( data.DraggableOffset.X, data.DraggableOffset.Y );
-                Rect    dragRect =  new Rect( pt, new Size( data.Site.ActualWidth + data.Site.Margin.Width(),
-                                                            data.Site.ActualHeight + data.Site.Margin.Height() ) );
-                Point   dragCenter = new Point( dragRect.X + dragRect.Width / 2,
-                                                dragRect.Y + dragRect.Height / 2 );
-
-                MatrixLoc insertIndex = new MatrixLoc(
-                            (int)( ( dragCenter.Y + dragRect.Height ) / dragRect.Height ) - 1,
-                            (int)( ( dragCenter.X + dragRect.Width  ) / dragRect.Width  ) - 1  );
-
-                MatrixLoc insertLoc = _controlData.Source.Bounds.ToLocation( insertIndex );
-
-                if( _controlData.Source.Bounds.Contains( insertLoc ) )
-                {
-                    eventArgs.Effects = DragDropEffects.Move;
-
-                    callback( insertLoc, data );
-                }
-                else
-                {
-                    eventArgs.Effects = DragDropEffects.None;
-                }
+                eventArgs.Effects = DragDropEffects.None;
             }
+
+            return true;
         }
 
 
