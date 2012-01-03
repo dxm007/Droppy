@@ -57,25 +57,10 @@ namespace Droppy
             _windowAutoHider.Unfreeze();
         }
 
-        protected override void OnSourceInitialized( EventArgs e )
+        public new void Show()
         {
-            base.OnSourceInitialized( e );
-
-            HwndSource source = HwndSource.FromHwnd( new WindowInteropHelper( this ).Handle );
-
-            source.AddHook( new HwndSourceHook( WndProc ) );
-        }
-
-        private IntPtr WndProc( IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled )
-        {
-            if( msg == App.WM_SHOWME )
-            {
-                this.Activate();
-                _windowAutoHider.ShowWindow();
-                handled = true;
-            }
-
-            return IntPtr.Zero;
+            base.Show();
+            _windowAutoHider.ShowWindow();
         }
 
         private void OnClosing( object sender, System.ComponentModel.CancelEventArgs e )

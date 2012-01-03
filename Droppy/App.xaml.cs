@@ -5,6 +5,7 @@ using System.Data;
 using System.Linq;
 using System.Threading;
 using System.Windows;
+using System.Windows.Interop;
 
 
 namespace Droppy
@@ -31,7 +32,28 @@ namespace Droppy
 
         private void ActivateMainWindow()
         {
-            new MainWindow().Show();
+            var mainWindow = new MainWindow();
+
+            mainWindow.SourceInitialized += ( sender, e ) =>
+            {
+                HwndSource source = HwndSource.FromHwnd( new WindowInteropHelper( mainWindow ).Handle );
+                source.AddHook( new HwndSourceHook( ShowFirstInstanceWinHook ) );
+            };
+
+            mainWindow.Show();
+        }
+
+        private IntPtr ShowFirstInstanceWinHook( IntPtr hwnd, int msg, IntPtr wParam,
+                                                 IntPtr lParam, ref bool handled      )
+        {
+            if( msg == App.WM_SHOWFIRSTINSTANCE )
+            {
+                MainWindow.Activate();
+                ( (MainWindow)MainWindow ).Show();
+                handled = true;
+            }
+
+            return IntPtr.Zero;
         }
 
         private void SignalOtherInstanceToActivate()
@@ -45,7 +67,7 @@ namespace Droppy
         }
 
         private static readonly IntPtr      HWND_BROADCAST = (IntPtr)0xffff;
-        public static readonly int          WM_SHOWME = 
+        public static readonly int          WM_SHOWFIRSTINSTANCE = 
                     Win32.RegisterWindowMessage( "{BD14E533-C8F9-4470-BAD8-E033423DF334}" );
         private static Mutex                _singleAppInstanceMutex = 
                     new Mutex( true, "Local\\{BD14E533-C8F9-4470-BAD8-E033423DF334}" );
