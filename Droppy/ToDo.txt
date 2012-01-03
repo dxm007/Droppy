@@ -1,11 +1,10 @@
-- add a context menu, allow users to copy/move files via the context menu "Paste" command
-- Spend some time cleaning up code, maybe a little refactoring, definitely add a whole bunch of
-  comments to a whole bunch of places
 - Add ability to set custom names/labels on items
 - folder should have a tool tip which displays full path when mouse is hovering over
 - create an icon for the application
 - research open source license to use
 - add about dialog
+- Spend some time cleaning up code, maybe a little refactoring, definitely add a whole bunch of
+  comments to a whole bunch of places
 ----------------------------------------------------------------------------------------------
 - Add a toolbar button to pin/unpin docked window so that it doesn't get automatically hidden.
 - ability to hide the window (add hot key to bring it back)
@@ -25,6 +24,7 @@
 
 
 Completed:
+- add a context menu, allow users to copy/move files via the context menu "Paste" command
 - when a second instance is launched, it should make the first one appear and exit
 - Window docker shouldn't allow docking to edge of the screen occuppied by an appbar (taskbar).
 - Window docker should listen for resolution change events

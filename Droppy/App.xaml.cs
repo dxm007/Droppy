@@ -46,7 +46,7 @@ namespace Droppy
         private IntPtr ShowFirstInstanceWinHook( IntPtr hwnd, int msg, IntPtr wParam,
                                                  IntPtr lParam, ref bool handled      )
         {
-            if( msg == App.WM_SHOWFIRSTINSTANCE )
+            if( msg == WM_SHOWFIRSTINSTANCE )
             {
                 MainWindow.Activate();
                 ( (MainWindow)MainWindow ).Show();
@@ -58,7 +58,7 @@ namespace Droppy
 
         private void SignalOtherInstanceToActivate()
         {
-            Win32.SendNotifyMessage( HWND_BROADCAST, WM_SHOWME, IntPtr.Zero, IntPtr.Zero );
+            Win32.SendNotifyMessage( HWND_BROADCAST, WM_SHOWFIRSTINSTANCE, IntPtr.Zero, IntPtr.Zero );
         }
 
         private bool IsFirstInstance()
@@ -67,7 +67,7 @@ namespace Droppy
         }
 
         private static readonly IntPtr      HWND_BROADCAST = (IntPtr)0xffff;
-        public static readonly int          WM_SHOWFIRSTINSTANCE = 
+        private static readonly int         WM_SHOWFIRSTINSTANCE = 
                     Win32.RegisterWindowMessage( "{BD14E533-C8F9-4470-BAD8-E033423DF334}" );
         private static Mutex                _singleAppInstanceMutex = 
                     new Mutex( true, "Local\\{BD14E533-C8F9-4470-BAD8-E033423DF334}" );

@@ -27,6 +27,35 @@ namespace Droppy
         public FolderWidgetControl()
         {
             new FileDropHelper( this, true ).FileDrop += OnFileDrop;
+
+            ContextMenuOpening += OnContextMenuOpening;
+        }
+
+        #region - - - - - - - - IsPasteEnabled (read-only) Dependency Property - - - - - - - - - -
+
+        private static readonly DependencyPropertyKey IsPasteEnabledPropertyKey =
+                DependencyProperty.RegisterReadOnly( "IsPasteEnabled", typeof( bool ), typeof( FolderWidgetControl ),
+                                                     new FrameworkPropertyMetadata( false )                           );
+        public static readonly DependencyProperty IsPasteEnabledProperty = IsPasteEnabledPropertyKey.DependencyProperty;
+
+        public bool IsPasteEnabled
+        {
+            get { return (bool)GetValue( IsPasteEnabledPropertyKey.DependencyProperty ); }
+            private set { SetValue( IsPasteEnabledPropertyKey, value ); }
+        }
+
+        #endregion
+
+        public override void OnApplyTemplate()
+        {
+            base.OnApplyTemplate();
+
+            var pasteClicker = Template.FindName( "PART_PasteClicker", this ) as UIElement;
+
+            if( pasteClicker != null )
+            {
+                pasteClicker.AddHandler( MenuItem.ClickEvent, new RoutedEventHandler( OnPaste ) );
+            }
         }
 
         protected override void OnClick( object sender, RoutedEventArgs e )
@@ -41,18 +70,42 @@ namespace Droppy
 
         private void OnFileDrop( object sender, FileDropEventArgs e )
         {
+            ProcessFileDrop( e.Files, e.IsMove );
+        }
+
+        private void OnContextMenuOpening( object sender, ContextMenuEventArgs e )
+        {
+            IsPasteEnabled = Clipboard.ContainsFileDropList();
+        }
+
+        private void OnPaste( object sender, RoutedEventArgs e )
+        {
+            var files = Clipboard.GetData( "FileDrop" ) as string[];
+            var dropEffectStream = Clipboard.GetData( "Preferred DropEffect" ) as System.IO.MemoryStream;
+
+            if( files == null || dropEffectStream == null ||
+                files.Length == 0 || dropEffectStream.Length != 4 ) return;
+
+            var dropEffectReader = new System.IO.BinaryReader( dropEffectStream );
+            var dropEffect =  (DragDropEffects)dropEffectReader.ReadInt32();
+
+            ProcessFileDrop( files, dropEffect.HasFlag( DragDropEffects.Move ) );
+        }
+
+        private void ProcessFileDrop( string[] filePaths, bool isMove )
+        {
             IFileOperation          fileOp = new FileOperationG1();
             Data.FolderWidgetData   data = DataContext as Data.FolderWidgetData;
 
             if( data == null ) return;
 
             fileOp.ParentWindow = Window.GetWindow( this );
-            fileOp.Operation = e.IsMove ? FILEOP_CODES.FO_MOVE :
-                                          FILEOP_CODES.FO_COPY ;
-            fileOp.From = e.Files;
-            fileOp.To = new string[1] { data.Path };
+            fileOp.Operation = isMove ? FILEOP_CODES.FO_MOVE :
+                                        FILEOP_CODES.FO_COPY;
+            fileOp.From = filePaths;
+            fileOp.To = new string[ 1 ] { data.Path };
             fileOp.Flags = FILEOP_FLAGS.FOF_ALLOWUNDO;
-            
+
             fileOp.Execute();
         }
     }

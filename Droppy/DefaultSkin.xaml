@@ -722,6 +722,12 @@
                             <Image Width="24" Source="{DynamicResource FolderIcon1}" DockPanel.Dock="Left"/>
                             <local:FilePathTextBlock Margin="4,0,0,0" Foreground="white" FilePath="{Binding Path=Label}" VerticalAlignment="Center"/>
                         </DockPanel>
+                        
+                        <Button.ContextMenu>
+                            <ContextMenu >
+                                <MenuItem Name="PART_PasteClicker" Header="Paste" IsEnabled="{TemplateBinding IsPasteEnabled}" />
+                            </ContextMenu>
+                        </Button.ContextMenu>
                     </Button>
                 </ControlTemplate>
             </Setter.Value>
