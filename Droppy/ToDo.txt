@@ -1,7 +1,10 @@
 
-- Add a toolbar button to pin/unpin docked window so that it doesn't get automatically hidden.
 - Change the way WindowDocker determines desktop boundaries. Especially pay attention to multiheaded
   machines where each screen has a different resolution.
+- Window docker should listen for resolution change events
+- Window docker should handle cases where we go from 2 headed machine to remote login which appears
+  single headed.
+- Window docker shouldn't allow docking to edge of the screen occuppied by an appbar (taskbar).
 - when a second instance is launched, it should make the first one appear and exit
 - add a context menu, allow users to copy/move files via the context menu "Paste" command
 - Spend some time cleaning up code, maybe a little refactoring, definitely add a whole bunch of
@@ -12,6 +15,7 @@
 - research open source license to use
 - add about dialog
 ----------------------------------------------------------------------------------------------
+- Add a toolbar button to pin/unpin docked window so that it doesn't get automatically hidden.
 - ability to hide the window (add hot key to bring it back)
 - On exit, the app should remember its dock state and then return to it when it is restarted
 - in addition to folders, ability to add shortcuts

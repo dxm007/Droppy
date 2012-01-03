@@ -41,7 +41,7 @@ namespace Droppy
             this.Closing += OnClosing;
         }
 
-        public static MainWindow GetWindow( DependencyObject dependencyObject )
+        public static new MainWindow GetWindow( DependencyObject dependencyObject )
         {
             return (MainWindow)Window.GetWindow( dependencyObject );
         }

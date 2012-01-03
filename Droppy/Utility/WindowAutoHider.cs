@@ -208,9 +208,13 @@ namespace Droppy
 
         private void StartAutoHideTimerIfNeeded()
         {
+            bool isAutoHideFrozen = _freezeCount > 0;
+            bool isDragDropInProgress = _dragCount > 0;
+            bool isAutoHideEnabled = _mode != AutoHideMode.None;
+
             if( _currentState == AutoHideState.Visible &&
-                _mode != AutoHideMode.None && _freezeCount == 0 &&
-                !_parent.IsMouseOver && !_parent.IsActive && _dragCount == 0 )
+                isAutoHideEnabled && !isAutoHideFrozen && !isDragDropInProgress &&
+                !_parent.IsMouseOver && !_parent.IsActive                          )
             {
                 _autoHideTimer = new DispatcherTimer( DispatcherPriority.Normal, _parent.Dispatcher );
 

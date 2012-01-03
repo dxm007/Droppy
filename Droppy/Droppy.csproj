@@ -67,6 +67,7 @@
     <Compile Include="ResizeBarControl.cs" />
     <Compile Include="UI\ClippingBorder.cs" />
     <Compile Include="UI\MainWindowDockCoordinator.cs" />
+    <Compile Include="Utility\DesktopMonitorInfo.cs" />
     <Compile Include="Utility\WindowAutoHider.cs" />
     <Compile Include="Utility\DragDropHelper.cs" />
     <Compile Include="Utility\FileOperation.cs" />

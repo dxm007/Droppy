@@ -48,6 +48,9 @@ namespace Droppy
             _parent = parent;
             _windowMover = windowMover;
 
+            _desktopInfo = new DesktopMonitorInfo( parent.Dispatcher );
+            _desktopInfo.DesktopChanged += new EventHandler( OnDesktopChanged );
+
             SetupEventSubscriptions();
         }
 
@@ -81,78 +84,184 @@ namespace Droppy
         {
             _windowMover.Moving += new EventHandler<WindowMoverMovingEventArgs>( OnWindowMoving );
             _windowMover.MoveFinished += new EventHandler<WindowMoverEventArgs>( OnWindowMoveFinished );
-
-            _screenRect = new Rect( new Size( SystemParameters.PrimaryScreenWidth,
-                                              SystemParameters.PrimaryScreenHeight ) );
-        }
-
-        private void InitDockableBoundary()
-        {
         }
 
         private void OnWindowMoving( object sender, WindowMoverMovingEventArgs e )
         {
-            Point   position = e.NewPosition;
-
-            DockState dockability = CalculateDockability( 
+            DockState dockability = DetermineDockability( 
                         new Rect( e.NewPosition, _parent.ActualSize() ), _snapDistance );
 
-            switch( dockability )
-            {
-            case DockState.LeftDock:
-                position.X = _screenRect.Left;
-                break;
-            case DockState.RightDock:
-                position.X = _screenRect.Right - _parent.ActualWidth;
-                break;
-            case DockState.TopDock:
-                position.Y = _screenRect.Top;
-                break;
-            case DockState.BottomDock:
-                position.Y = _screenRect.Bottom - _parent.ActualHeight;
-                break;
-            default:
-                break;
-            }
-
-            e.NewPosition = position;
+            e.NewPosition = CalculateParentDockedPosition( dockability, e.NewPosition );
         }
 
         private void OnWindowMoveFinished( object sender, WindowMoverEventArgs e )
         {
-            DockState dockability = CalculateDockability(
-                        new Rect( _parent.Location(), _parent.ActualSize() ), 0.0 );
+            DockState dockability = DetermineDockability( GetParentWindowRect(), 0.0 );
 
             UpdateState( dockability );
         }
 
-        private DockState CalculateDockability( Rect windowRect, double snapDistance )
+        private void OnDesktopChanged( object sender, EventArgs e )
         {
-            if( windowRect.Left <= snapDistance )
+            if( !IsDockStateValidForMonitor( _currentState, _currentMonitor ) )
             {
-                return DockState.LeftDock;
-            }
-            else if( windowRect.Right >= _screenRect.Right - snapDistance )
-            {
-                return DockState.RightDock;                
+                _currentMonitor = null;
             }
 
-            if( windowRect.Top <= snapDistance )
+            if( _currentMonitor != null )
             {
-                return DockState.TopDock;
+                Rect windowRect = GetParentWindowRect();
+
+                windowRect.Location = CalculateParentDockedPosition( _currentState, windowRect.Location );
+
+                EnsureWindowRectIsInMonitor( ref windowRect, _currentMonitor );
+
+                _parent.Left = windowRect.X;
+                _parent.Top = windowRect.Y;
             }
-            else if( windowRect.Bottom >= _screenRect.Bottom - snapDistance )
+            else
             {
-                return DockState.BottomDock;
+                UpdateState( DockState.Floating );
+                MoveParentToPrimaryMonitor();
+            }
+        }
+
+        private DockState DetermineDockability( Rect windowRect, double snapDistance )
+        {
+            UpdateCurrentMonitor( windowRect );
+
+            Rect monitorRect = _currentMonitor.MonitorArea;
+
+            if( _currentMonitor == null ||
+                !monitorRect.Contains( windowRect ) )
+            {
+                return DockState.Floating;
+            }
+
+            monitorRect.Inflate( -snapDistance, -snapDistance );
+
+            if( windowRect.Left <= monitorRect.Left )
+            {
+                if( !_currentMonitor.HasLeftTaskbar ) return DockState.LeftDock;
+            }
+
+            if( windowRect.Right >= monitorRect.Right )
+            {
+                if( !_currentMonitor.HasRightTaskbar ) return DockState.RightDock;                
+            }
+
+            if( windowRect.Top <= monitorRect.Top )
+            {
+                if( !_currentMonitor.HasTopTaskbar ) return DockState.TopDock;
+            }
+            else if( windowRect.Bottom >= monitorRect.Bottom )
+            {
+                if( !_currentMonitor.HasBottomTaskbar ) return DockState.BottomDock;
             }
 
             return DockState.Floating;
         }
 
-        private Window          _parent;
-        private IWindowMover    _windowMover;
-        private Rect            _screenRect;
-        private DockState       _currentState;
+        private Point CalculateParentDockedPosition( DockState dockState, Point parentPosition )
+        {
+            Point position = parentPosition;
+
+            switch( dockState )
+            {
+            case DockState.LeftDock:
+                position.X = _currentMonitor.MonitorArea.Left;
+                break;
+            case DockState.RightDock:
+                position.X = _currentMonitor.MonitorArea.Right - _parent.ActualWidth;
+                break;
+            case DockState.TopDock:
+                position.Y = _currentMonitor.MonitorArea.Top;
+                break;
+            case DockState.BottomDock:
+                position.Y = _currentMonitor.MonitorArea.Bottom - _parent.ActualHeight;
+                break;
+            default:
+                break;
+            }
+
+            return position;
+        }
+
+        private bool IsDockStateValidForMonitor( DockState state, MonitorInfo monitor )
+        {
+            if( monitor == null ) return false;
+
+            if( monitor.IsStale ) return false;
+
+            switch( _currentState )
+            {
+            case DockState.LeftDock:
+                if( _currentMonitor.HasLeftTaskbar ) return false;
+                break;
+            case DockState.TopDock:
+                if( _currentMonitor.HasTopTaskbar ) return false;
+                break;
+            case DockState.RightDock:
+                if( _currentMonitor.HasRightTaskbar ) return false;
+                break;
+            case DockState.BottomDock:
+                if( _currentMonitor.HasBottomTaskbar ) return false;
+                break;
+            default:
+                break;
+            }
+             
+            return true;
+        }
+
+        private void EnsureWindowRectIsInMonitor( ref Rect windowRect, MonitorInfo monitor )
+        {
+            if( windowRect.Left < monitor.MonitorArea.Left )
+            {
+                windowRect.X = monitor.MonitorArea.Left;
+            }
+            else if( windowRect.Right > monitor.MonitorArea.Right )
+            {
+                windowRect.X = monitor.MonitorArea.Right - windowRect.Width;
+            }
+
+            if( windowRect.Top < monitor.MonitorArea.Top )
+            {
+                windowRect.Y = monitor.MonitorArea.Top;
+            }
+            else if( windowRect.Bottom > monitor.MonitorArea.Bottom )
+            {
+                windowRect.Y = monitor.MonitorArea.Bottom - windowRect.Height;
+            }
+        }
+
+        private void MoveParentToPrimaryMonitor()
+        {
+            MonitorInfo     primaryMonitor = _desktopInfo.FindPrimaryMonitor();
+
+            _parent.Left = primaryMonitor.WorkArea.Left + 100;
+            _parent.Top = primaryMonitor.WorkArea.Top + 100;
+        }
+
+        private void UpdateCurrentMonitor( Rect windowRect )
+        {
+            if( _currentMonitor == null ||
+                !_currentMonitor.MonitorArea.IntersectsWith( windowRect ) )
+            {
+                _currentMonitor = _desktopInfo.FindMonitor( windowRect );
+            }
+        }
+
+        private Rect GetParentWindowRect()
+        {
+            return new Rect( _parent.Location(), _parent.ActualSize() );
+        }
+
+        private Window              _parent;
+        private IWindowMover        _windowMover;
+        private DesktopMonitorInfo  _desktopInfo;
+        private MonitorInfo         _currentMonitor;
+        private DockState           _currentState;
 
         private const double    _snapDistance = 10.0;
     }
