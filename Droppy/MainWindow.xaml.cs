@@ -8,6 +8,7 @@ using System.Windows.Controls.Primitives;
 using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Input;
+using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
@@ -54,6 +55,27 @@ namespace Droppy
         public void UnfreezeAutoHide()
         {
             _windowAutoHider.Unfreeze();
+        }
+
+        protected override void OnSourceInitialized( EventArgs e )
+        {
+            base.OnSourceInitialized( e );
+
+            HwndSource source = HwndSource.FromHwnd( new WindowInteropHelper( this ).Handle );
+
+            source.AddHook( new HwndSourceHook( WndProc ) );
+        }
+
+        private IntPtr WndProc( IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled )
+        {
+            if( msg == App.WM_SHOWME )
+            {
+                this.Activate();
+                _windowAutoHider.ShowWindow();
+                handled = true;
+            }
+
+            return IntPtr.Zero;
         }
 
         private void OnClosing( object sender, System.ComponentModel.CancelEventArgs e )

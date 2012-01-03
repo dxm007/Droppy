@@ -43,7 +43,7 @@ namespace Droppy
             else
             {
                 _parent.Topmost = true;
-                _parent.ShowInTaskbar = false;
+                //_parent.ShowInTaskbar = false;
             }
         }
 

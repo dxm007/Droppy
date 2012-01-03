@@ -46,6 +46,8 @@ namespace Droppy
         void Freeze();
 
         void Unfreeze();
+
+        void ShowWindow();
     }
 
 
@@ -125,6 +127,11 @@ namespace Droppy
             {
                 StartAutoHideTimerIfNeeded();
             }
+        }
+
+        public void ShowWindow()
+        {
+            ExpandParentWindow();
         }
 
         private void OnModeUpdated( AutoHideMode previousMode )

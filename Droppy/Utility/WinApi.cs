@@ -61,22 +61,39 @@ namespace Droppy {
         public delegate bool MonitorEnumDelegate( IntPtr hMonitor, IntPtr hdcMonitor,
                                                   ref Rect lprcMonitor, IntPtr dwData );
 
-        [DllImport( "user32.dll" )]
+        [DllImport( "user32.dll", SetLastError = true )]
         public static extern bool EnumDisplayMonitors( IntPtr hdc, IntPtr lprcClip,
                                                        MonitorEnumDelegate lpfnEnum, IntPtr dwData );
 
-        [DllImport( "user32.dll" )]
+        [DllImport( "user32.dll", SetLastError = true )]
         public static extern bool GetMonitorInfo( IntPtr hMonitor, ref MonitorInfo lpmi );
 
         #endregion
 
         #endregion
 
-        #region ---- Windows App UI > Menus and Other Resources > Cursors ----
+        #region ---- Windows App UI ----
+        
+        #region ---- Menus and Other Resources > Cursors ----
 
         [DllImport("user32.dll")]
         [return: MarshalAs(UnmanagedType.Bool)]
         public static extern bool GetCursorPos(ref Point pt);
+
+        #endregion
+
+        #region ---- Windows and Messages > Messages and Message Queues -----
+
+        [DllImport( "user32.dll", SetLastError=true )]
+        public static extern bool PostMessage( IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam );
+
+        [DllImport( "user32.dll", SetLastError=true )]
+        public static extern int RegisterWindowMessage( string message );
+
+        [DllImport( "user32.dll", SetLastError = true )]
+        public static extern bool SendNotifyMessage( IntPtr hWnd, int msg, IntPtr wParam, IntPtr lParam );
+
+        #endregion
 
         #endregion
 

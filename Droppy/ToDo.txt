@@ -1,11 +1,3 @@
-
-- Change the way WindowDocker determines desktop boundaries. Especially pay attention to multiheaded
-  machines where each screen has a different resolution.
-- Window docker should listen for resolution change events
-- Window docker should handle cases where we go from 2 headed machine to remote login which appears
-  single headed.
-- Window docker shouldn't allow docking to edge of the screen occuppied by an appbar (taskbar).
-- when a second instance is launched, it should make the first one appear and exit
 - add a context menu, allow users to copy/move files via the context menu "Paste" command
 - Spend some time cleaning up code, maybe a little refactoring, definitely add a whole bunch of
   comments to a whole bunch of places
@@ -33,6 +25,13 @@
 
 
 Completed:
+- when a second instance is launched, it should make the first one appear and exit
+- Window docker shouldn't allow docking to edge of the screen occuppied by an appbar (taskbar).
+- Window docker should listen for resolution change events
+- Window docker should handle cases where we go from 2 headed machine to remote login which appears
+  single headed.
+- Change the way WindowDocker determines desktop boundaries. Especially pay attention to multiheaded
+  machines where each screen has a different resolution.
 - ability to dock the window to top, left or right edge of the screen
 	- Add coordinator object between window docker and window auto hider so that when
 	  the window is docked, auto hider is automatically enabled
