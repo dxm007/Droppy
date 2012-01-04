@@ -194,7 +194,6 @@
     <!-- EndRegion -->
 
     <!-- Region ======================= Windows Controls Custom Styles ============ -->
-    <!-- ================ StandardWidgetButton Definition ======================-->
     <Style x:Key="StandardWidgetButton" TargetType="Button">
         <Setter Property="Template">
             <Setter.Value>
@@ -272,7 +271,6 @@
         </Setter>
     </Style>
 
-    <!-- ================ EmptyWidgetButton Definition ======================-->
     <Style x:Key="AddWidgetButton" TargetType="Button">
         <Setter Property="Template">
             <Setter.Value>
@@ -391,7 +389,6 @@
         </Setter>
     </Style>
 
-    <!-- ================ MainWindowHeaderButton Definition ==================-->
     <Style x:Key="MainWindowHeaderButton" TargetType="{x:Type Button}">
         <Setter Property="Template">
             <Setter.Value>
@@ -717,10 +714,12 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type local:FolderWidgetControl}">
-                    <Button Style="{StaticResource StandardWidgetButton}" Padding="6">
+                    <Button Name="FolderBtn" Style="{StaticResource StandardWidgetButton}" Padding="6" 
+                            ToolTip="{Binding Path=Path}">
                         <DockPanel>
-                            <Image Width="24" Source="{DynamicResource FolderIcon1}" DockPanel.Dock="Left"/>
-                            <local:FilePathTextBlock Margin="4,0,0,0" Foreground="white" FilePath="{Binding Path=Label}" VerticalAlignment="Center"/>
+                            <Image DockPanel.Dock="Left" Width="24" Source="{DynamicResource FolderIcon1}" />
+                            <local:FilePathTextBlock x:Name="FilePathTB" Margin="4,0,0,0" Foreground="white"
+                                                     FilePath="{Binding Path=Label}" VerticalAlignment="Center"/>
                         </DockPanel>
                         
                         <Button.ContextMenu>
@@ -729,6 +728,12 @@
                             </ContextMenu>
                         </Button.ContextMenu>
                     </Button>
+                    
+                    <ControlTemplate.Triggers>
+                        <Trigger SourceName="FilePathTB" Property="IsTextClipped" Value="False">
+                            <Setter TargetName="FolderBtn" Property="ToolTipService.IsEnabled" Value="False"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>

@@ -21,6 +21,8 @@ namespace Droppy
             //DefaultStyleKeyProperty.OverrideMetadata( typeof( FilePathTextBlock ), new FrameworkPropertyMetadata( typeof( FilePathTextBlock ) ) );
         }
 
+        #region - - - - - - - - - - - - - - FilePath Dependency Property - - - - - - - - - - - -
+
         public static readonly DependencyProperty FilePathProperty = 
                 DependencyProperty.Register( "FilePath", typeof( string ), typeof( FilePathTextBlock ),
                                              new FrameworkPropertyMetadata( ( d, e ) => ( (FilePathTextBlock)d ).OnFilePathChanged( e ) ) );
@@ -30,6 +32,23 @@ namespace Droppy
             get { return (string)GetValue( FilePathProperty ); }
             set { SetValue( FilePathProperty, value ); }
         }
+
+        #endregion
+
+        #region - - - - - - - - - - - - - - IsTextClipped(read-only) Dependency Property - - - - - - - - - - - -
+
+        private static readonly DependencyPropertyKey IsTextClippedPropertyKey = 
+                DependencyProperty.RegisterReadOnly( "IsTextClipped", typeof( bool ), typeof( FilePathTextBlock ),
+                                                     new FrameworkPropertyMetadata( false  )                       );
+        public static readonly DependencyProperty IsTextClippedProperty = IsTextClippedPropertyKey.DependencyProperty;
+
+        public bool IsTextClipped
+        {
+            get { return (bool)GetValue( IsTextClippedProperty ); }
+            private set { SetValue( IsTextClippedPropertyKey, value ); }
+        }
+
+        #endregion
 
         protected override void OnRenderSizeChanged( SizeChangedInfo sizeInfo )
         {
@@ -55,6 +74,7 @@ namespace Droppy
             if( string.IsNullOrEmpty( str ) )
             {
                 Text = null;
+                IsTextClipped = false;
                 return;
             }
 
@@ -87,6 +107,7 @@ namespace Droppy
             if( i < str.Length )
             {
                 Text = "..." + str.Substring( lastSlashPos, i - lastSlashPos ) + "...";
+                IsTextClipped = true;
             }
             else
             {   
@@ -100,10 +121,12 @@ namespace Droppy
                 if( i == -1 )
                 {
                     Text = str;
+                    IsTextClipped = false;
                 }
                 else
                 {
                     Text = "..." + str.Substring( i + 1 );
+                    IsTextClipped = true;
                 }
             }
         }

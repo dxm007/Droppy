@@ -34,7 +34,7 @@ namespace Droppy
 
         public object ConvertBack(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
         {
-            return value.GetType() == typeof( EmptySiteClass) ? null : value;
+            return value.GetType() == typeof( EmptySiteClass ) ? null : value;
         }
     }
 

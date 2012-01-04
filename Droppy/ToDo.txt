@@ -1,5 +1,4 @@
 - Add ability to set custom names/labels on items
-- folder should have a tool tip which displays full path when mouse is hovering over
 - create an icon for the application
 - research open source license to use
 - add about dialog
@@ -15,15 +14,20 @@
 - implement container widgets which bring up a popup with child widget matrix control
 - implement profiles. Each profile defines set of folders/files to show in the UI.  User should
   be able to define multiple profiles and easily switch between them.
-- see if context menu can be custom drawn instead of windows standard one
+- Create a second skin where each folder button doesn't take up as much room, maybe put text
+  under the icons and make each button more square
 - add ability to reskin the UI through a settings dialog box.
-  
+- Exported files should include whatever skin information needed in order to restore same
+  look and feel on a different machine
+- Allow folder paths to contain macros/environment variables so that on different windows
+  versions the paths will point to different physical folders
 - investigate if we can replace dragged adorner with a custom cursor that includes the image
   of the widget being dragged
 
 
 
 Completed:
+- folder should have a tool tip which displays full path when mouse is hovering over
 - add a context menu, allow users to copy/move files via the context menu "Paste" command
 - when a second instance is launched, it should make the first one appear and exit
 - Window docker shouldn't allow docking to edge of the screen occuppied by an appbar (taskbar).
@@ -43,6 +47,7 @@ Completed:
 		b) mouse is over the context menu popup
 		c) When a "add item" button is clicked- clicking empty folder should bring up a folder selection dialog box
 - clicking empty folder should bring up a folder selection dialog box		
+- see if context menu can be custom drawn instead of windows standard one
 - hookup export data button
 - hookup import data button
 - header bar needs controls:
@@ -74,10 +79,3 @@ Completed:
 - figure out how much of the folder path should be displayed in the UI.  The rest should
   be trimmed
 
-
-
-
-
-
-DragContext:
-16 bytes, all zeros except for byte 04 which is a 1
