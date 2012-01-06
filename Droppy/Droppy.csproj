@@ -66,6 +66,7 @@
     <Compile Include="Data\WidgetDocument.cs" />
     <Compile Include="ResizeBarControl.cs" />
     <Compile Include="UI\ClippingBorder.cs" />
+    <Compile Include="UI\InPlaceEditBoxPopup.cs" />
     <Compile Include="UI\MainWindowDockCoordinator.cs" />
     <Compile Include="Utility\DesktopMonitorInfo.cs" />
     <Compile Include="Utility\WindowAutoHider.cs" />

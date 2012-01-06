@@ -46,16 +46,36 @@ namespace Droppy
 
         #endregion
 
+        #region - - - - - - - - IsLabelEditPopupOpen Dependency Property - - - - - - - - - - - - -
+
+        public static readonly DependencyProperty IsLabelEditPopupOpenProperty =
+                DependencyProperty.Register( "IsLabelEditPopupOpen", typeof( bool ), typeof( FolderWidgetControl ),
+                                             new FrameworkPropertyMetadata( OnIsLabelEditPopupOpenChanged ) );
+
+        public bool IsLabelEditPopupOpen
+        {
+            get { return (bool)GetValue( IsLabelEditPopupOpenProperty ); }
+            set { SetValue( IsLabelEditPopupOpenProperty, value ); }
+        }
+
+        public static void OnIsLabelEditPopupOpenChanged( DependencyObject o,
+                                                          DependencyPropertyChangedEventArgs e )
+        {
+            ( (FolderWidgetControl)o ).OnIsLabelEditPopupChanged();
+        }
+
+        #endregion
+
         public override void OnApplyTemplate()
         {
             base.OnApplyTemplate();
 
-            var pasteClicker = Template.FindName( "PART_PasteClicker", this ) as UIElement;
-
-            if( pasteClicker != null )
-            {
-                pasteClicker.AddHandler( MenuItem.ClickEvent, new RoutedEventHandler( OnPaste ) );
-            }
+            new ControlInitHelper( this ).
+                Element( "PART_Paste" ).
+                    Add( MenuItem.ClickEvent, new RoutedEventHandler( OnPaste ) ).
+                Element( "PART_ChangeLabel" ).
+                    Add( MenuItem.ClickEvent, new RoutedEventHandler( 
+                                              ( o, e ) => IsLabelEditPopupOpen = true ) );
         }
 
         protected override void OnClick( object sender, RoutedEventArgs e )
@@ -107,6 +127,12 @@ namespace Droppy
             fileOp.Flags = FILEOP_FLAGS.FOF_ALLOWUNDO;
 
             fileOp.Execute();
+        }
+
+        private void OnIsLabelEditPopupChanged()
+        {
+            RaiseEvent( new RoutedEventArgs( IsLabelEditPopupOpen ? WidgetSiteControl.UndraggableEvent :
+                                                                    WidgetSiteControl.DraggableEvent     ) );
         }
     }
 }

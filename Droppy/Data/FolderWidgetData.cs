@@ -18,7 +18,7 @@ namespace Droppy.Data
 
         public string Label
         {
-            get { return _label ?? _path; }
+            get { return string.IsNullOrEmpty( _label ) ? _path : _label; }
             set { _label = value; IsDirty = true; }
         }
 

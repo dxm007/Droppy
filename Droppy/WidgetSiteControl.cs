@@ -64,6 +64,74 @@ namespace Droppy
             new WidgetSiteDragHelper( this );
         }
 
+        #region - - - - - - - - Undraggable Attached Routed Event - - - - - - -
+
+        public static readonly RoutedEvent UndraggableEvent = 
+                EventManager.RegisterRoutedEvent( "Undraggable", RoutingStrategy.Bubble,
+                                                  typeof( RoutedEventHandler ), typeof( WidgetSiteControl ) );
+
+        public static void AddUndraggableHandler( DependencyObject dependencyObject,
+                                                  RoutedEventHandler eventHandler )
+        {
+            if( dependencyObject is UIElement )
+            {
+                ( (UIElement)dependencyObject ).AddHandler( UndraggableEvent, eventHandler );
+            }
+            else if( dependencyObject is ContentElement )
+            {
+                ( (ContentElement)dependencyObject ).AddHandler( UndraggableEvent, eventHandler );
+            }
+        }
+
+        public static void RemoveUndraggableHandler( DependencyObject dependencyObject,
+                                                     RoutedEventHandler eventHandler )
+        {
+            if( dependencyObject is UIElement )
+            {
+                ( (UIElement)dependencyObject ).RemoveHandler( UndraggableEvent, eventHandler );
+            }
+            else if( dependencyObject is ContentElement )
+            {
+                ( (ContentElement)dependencyObject ).RemoveHandler( UndraggableEvent, eventHandler );
+            }
+        }
+
+        #endregion
+
+        #region - - - - - - - - Draggable Attached Routed Event - - - - - - - -
+
+        public static readonly RoutedEvent DraggableEvent = 
+                EventManager.RegisterRoutedEvent( "Draggable", RoutingStrategy.Bubble,
+                                                  typeof( RoutedEventHandler ), typeof( WidgetSiteControl ) );
+
+        public static void AddDraggableHandler( DependencyObject dependencyObject,
+                                                RoutedEventHandler eventHandler )
+        {
+            if( dependencyObject is UIElement )
+            {
+                ( (UIElement)dependencyObject ).AddHandler( DraggableEvent, eventHandler );
+            }
+            else if( dependencyObject is ContentElement )
+            {
+                ( (ContentElement)dependencyObject ).AddHandler( DraggableEvent, eventHandler );
+            }
+        }
+
+        public static void RemoveDraggableHandler( DependencyObject dependencyObject,
+                                                   RoutedEventHandler eventHandler )
+        {
+            if( dependencyObject is UIElement )
+            {
+                ( (UIElement)dependencyObject ).RemoveHandler( DraggableEvent, eventHandler );
+            }
+            else if( dependencyObject is ContentElement )
+            {
+                ( (ContentElement)dependencyObject ).RemoveHandler( DraggableEvent, eventHandler );
+            }
+        }
+
+        #endregion
+
         public MatrixLoc Location
         {
             get { return _location; }
@@ -136,6 +204,8 @@ namespace Droppy
     {
         public WidgetSiteDragHelper( WidgetSiteControl parentSite ) : base( parentSite )
         {
+            WidgetSiteControl.AddUndraggableHandler( parentSite, OnWidgetUndraggable );
+            WidgetSiteControl.AddDraggableHandler( parentSite, OnWidgetDraggable );
         }
 
         public WidgetSiteControl Parent { get { return (WidgetSiteControl)DragSource; } }
@@ -152,5 +222,24 @@ namespace Droppy
 
             e.DragData = dataObject;
         }
+
+        protected override bool ValidateDragEventSource( MouseButtonEventArgs e )
+        {
+            return _dragFrozenCount == 0;
+        }
+
+        private void OnWidgetUndraggable( object sender, RoutedEventArgs e )
+        {
+            _dragFrozenCount++;
+        }
+
+        private void OnWidgetDraggable( object sender, RoutedEventArgs e )
+        {
+            System.Diagnostics.Debug.Assert( _dragFrozenCount > 0 );
+
+            _dragFrozenCount--;
+        }
+
+        private int _dragFrozenCount;
     }
 }

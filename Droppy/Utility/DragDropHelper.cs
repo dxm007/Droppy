@@ -339,14 +339,20 @@ namespace Droppy
             OnDragComplete( eventArgs.DragData, result );
         }
 
+        protected virtual bool ValidateDragEventSource( MouseButtonEventArgs e )
+        {
+            return true;
+        }
+
         private void OnMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
             // If a child control (such as a button) already has mouse capture, we don't want to take
             // it away from it.  Since it is a child, the events we need will still bubble up to us.
             // If there's no capture, make sure to get one here so there's no quirks listening to the
             // mouse
-            if( Mouse.Captured != null ||
-                ( _isMouseCaptured = _dragSource.CaptureMouse() ) == true )
+            if( ValidateDragEventSource( e ) &&
+                ( Mouse.Captured != null ||
+                  ( _isMouseCaptured = _dragSource.CaptureMouse() ) == true ) )
             {
                 _isMouseDown = true;
                 _clickPoint = e.GetPosition( _dragSource );

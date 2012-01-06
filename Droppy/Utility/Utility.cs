@@ -1,7 +1,7 @@
 ﻿
 using System;
 using System.Windows;
-
+using System.Windows.Controls;
 
 namespace Droppy
 {
@@ -44,5 +44,45 @@ namespace Droppy
         public IntPtr Handle { get { return _handle; } }
 
         private IntPtr      _handle;
+    }
+
+    public class ControlInitHelper
+    {
+        public ControlInitHelper( Control control )
+        {
+            _element = null;
+            _control = control;
+        }
+
+        public ControlInitHelper Element( string elementName )
+        {
+            _element = (UIElement)_control.Template.FindName( elementName, _control );
+            return this;
+        }
+
+        public ControlInitHelper Get<TElem>( out TElem element )
+                where TElem : UIElement
+        {
+            element = (TElem)_element;
+            return this;
+        }
+
+        public ControlInitHelper Add( RoutedEvent   routedEvent,
+                                      Delegate      eventHandler ) 
+        {
+            if( _element != null )
+            {
+                _element.AddHandler( routedEvent, eventHandler );
+            }
+            else
+            {
+                _control.AddHandler( routedEvent, eventHandler );
+            }
+
+            return this;
+        }
+
+        private Control     _control;
+        private UIElement   _element;
     }
 }
