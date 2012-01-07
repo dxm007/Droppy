@@ -141,19 +141,6 @@ namespace Droppy
             }
         }
 
-        private void OnTestMenuItemClick( object sender, RoutedEventArgs e )
-        {
-            var animation = new DoubleAnimation();
-
-            animation.To = 5.0;
-            animation.Duration = new Duration( TimeSpan.FromSeconds( 0.4 ) );
-            animation.AutoReverse = true;
-
-            this.Width = this.ActualWidth;
-
-            this.BeginAnimation( Window.WidthProperty, animation );
-        }
-
         private static void AssignCommonFileDialogProps( Microsoft.Win32.FileDialog dlg )
         {
             dlg.DefaultExt = "*.droppy";

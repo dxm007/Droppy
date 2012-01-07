@@ -4,6 +4,7 @@
         xmlns:local="clr-namespace:Droppy"
         xmlns:local_ui="clr-namespace:Droppy.UI"
         Title="MainWindow" ResizeMode="NoResize" SizeToContent="WidthAndHeight"
+        Icon="/Droppy;component/Resources/AppIcon1.ico"
         WindowStartupLocation="CenterScreen" WindowStyle="None" Background="Transparent" AllowsTransparency="True">
     <Window.Resources>
         <Style TargetType="{x:Type ContextMenu}" BasedOn="{StaticResource ContextMenuStyle}"/>
@@ -38,7 +39,6 @@
                                         <Rectangle Fill="{StaticResource ImportIconBrush}" Width="16" Height="16"/>
                                     </MenuItem.Icon>
                                 </MenuItem>
-                                <MenuItem Header="Test" Click="OnTestMenuItemClick" />
                             </ContextMenu>
                         </Button.ContextMenu>
                         
