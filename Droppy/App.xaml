@@ -1,4 +1,18 @@
-﻿<Application x:Class="Droppy.App"
+﻿<!-- ==============================================================================================
+===================================================================================================
+    
+    Copyright (c) 2012 Dennis Mnuskin
+    
+    This file is part of Droppy application.
+    
+    This source code is distributed under the MIT license.  For full text, see
+    http://www.opensource.org/licenses/mit-license.php Same text is found in LICENSE file which
+    is located in root directory of the project.
+    
+===================================================================================================
+=============================================================================================== -->
+
+<Application x:Class="Droppy.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <Application.Resources>

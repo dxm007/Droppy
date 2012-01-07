@@ -1,4 +1,22 @@
-﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+﻿<!-- ==============================================================================================
+===================================================================================================
+    
+    Copyright (c) 2012 Dennis Mnuskin
+    
+    This file is part of Droppy application.
+    
+    This source code is distributed under the MIT license.  For full text, see
+    http://www.opensource.org/licenses/mit-license.php Same text is found in LICENSE file which
+    is located in root directory of the project.
+    
+    NOTES: This file uses region-style tags defined by XAML Regions Visual Studio Extension.
+    The extension can be found at the following location:
+        http://visualstudiogallery.msdn.microsoft.com/3c534623-bb05-417f-afc0-c9e26bf0e177
+    
+===================================================================================================
+=============================================================================================== -->
+
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:local="clr-namespace:Droppy"
                     xmlns:data="clr-namespace:Droppy.Data">

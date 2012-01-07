@@ -1,4 +1,17 @@
-﻿
+﻿//=================================================================================================
+//=================================================================================================
+//
+// Copyright (c) 2012 Dennis Mnuskin
+//
+// This file is part of Droppy application.
+//
+// This source code is distributed under the MIT license.  For full text, see
+// http://www.opensource.org/licenses/mit-license.php Same text is found in LICENSE file which
+// is located in root directory of the project.
+//
+//=================================================================================================
+//=================================================================================================
+
 using System;
 using System.Windows;
 using System.Windows.Controls;
