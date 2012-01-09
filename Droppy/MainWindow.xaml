@@ -17,7 +17,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:Droppy"
         xmlns:local_ui="clr-namespace:Droppy.UI"
-        Title="MainWindow" ResizeMode="NoResize" SizeToContent="WidthAndHeight"
+        Title="Droppy" ResizeMode="NoResize" SizeToContent="WidthAndHeight"
         Icon="/Droppy;component/Resources/AppIcon1.ico"
         WindowStartupLocation="CenterScreen" WindowStyle="None" Background="Transparent" AllowsTransparency="True">
     <Window.Resources>

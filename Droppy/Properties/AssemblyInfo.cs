@@ -1,8 +1,23 @@
-﻿using System.Reflection;
+﻿//=================================================================================================
+//=================================================================================================
+//
+// Copyright (c) 2012 Dennis Mnuskin
+//
+// This file is part of Droppy application.
+//
+// This source code is distributed under the MIT license.  For full text, see
+// http://www.opensource.org/licenses/mit-license.php Same text is found in LICENSE file which
+// is located in root directory of the project.
+//
+//=================================================================================================
+//=================================================================================================
+
+using System.Reflection;
 using System.Resources;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Windows;
+
 
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
@@ -12,7 +27,7 @@ using System.Windows;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
 [assembly: AssemblyProduct("Droppy")]
-[assembly: AssemblyCopyright("Copyright ©  2010")]
+[assembly: AssemblyCopyright("Copyright ©  2012 Dennis Mnuskin")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 

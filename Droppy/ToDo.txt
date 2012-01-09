@@ -4,6 +4,8 @@
 - Cleanup project files and folders.  Also put resources in the right places
 - Produce a full build project that will create redistributable package.
 ----------------------------------------------------------------------------------------------
+- When resolution changes while the window is docked, it might end up being docked in the
+  middle of the screen. Undocking and redocking it back fixes the placement.
 - disabled menu items are a bit too difficult to see.  Can their visibility be improved
 - explore the possibility of dragging a folder button into a text field and have that field be
   automatically populated with the folder path
@@ -31,6 +33,15 @@
 
 
 Completed:
+- Produce NSIS installation project:
+	- "MainWindow" title will have to be changed to "Droppy"
+	- Create a start menu item for Droppy
+		http://nsis.sourceforge.net/Simple_tutorials
+	- Make installation support multi-user installation instead of requiring admin:
+		http://nsis.sourceforge.net/Docs/MultiUser/Readme.html
+	- Register for uinstall with windows:
+		http://nsis.sourceforge.net/Add_uninstall_information_to_Add/Remove_Programs
+	- ask the user if he wants to run Droppy after installation completes
 - research open source license to use (MIT License)
 - create an icon for the application
 - Add ability to set custom names/labels on items
