@@ -1,0 +1,86 @@
+<!-- ==============================================================================================
+===================================================================================================
+    
+    Copyright (c) 2012 Dennis Mnuskin
+    
+    This file is part of Droppy application.
+    
+    This source code is distributed under the MIT license.  For full text, see
+    http://www.opensource.org/licenses/mit-license.php Same text is found in LICENSE file which
+    is located in root directory of the project.
+    
+    
+    = = = = = = = = = = = = = USAGE: = = = = = = = = = = = = =
+    
+    msbuild BuildDroppy.proj [/p:Configuration=(Debug|Release)] [/t:(Build|Rebuild|Clean)]
+    
+    "/p:Configuration" selects whether to build Debug or Release.  If not specified, default
+    configuration is Release.  When building in release mode the script will also generate
+    redistributable files.
+    
+    "/t:" selects a target which determines whether to incrementally build (Build), perform 
+    a full rebuild (Rebuild) or to only cleanup previous, if any, build output (Clean). If not
+    specified, default is Build.
+    
+    For more advanced command line options, see "MSBuild Command Line Reference" page in MSDN 
+    Library.
+    
+===================================================================================================
+=============================================================================================== -->
+
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+ 
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Release</Configuration>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <RootProjectDir>$(MSBuildProjectDirectory)\..</RootProjectDir>
+    <RedistDir>$(RootProjectDir)\Redist</RedistDir>
+    <InstallerDir>$(RootProjectDir)\Build\Installer</InstallerDir>
+    <installerProjPath>$(InstallerDir)\Droppy.nsi</installerProjPath>
+  </PropertyGroup>
+
+
+  <PropertyGroup>
+    <ProgramFiles32>$(MSBuildProgramFiles32)</ProgramFiles32>
+    <ProgramFiles32 Condition=" '$(ProgramFiles32)' == '' ">$(ProgramFiles%28x86%29)</ProgramFiles32>
+    <ProgramFiles32 Condition=" '$(ProgramFiles32)' == '' ">$(ProgramFiles)</ProgramFiles32>
+    <MakeNsisName Condition=" '$(MakeNsisName)' == '' ">makensis.exe</MakeNsisName>
+    <MakeNsisPath Condition=" '$(MakeNsisPath)' == '' ">$(ProgramFiles32)\NSIS\$(MakeNsisName)</MakeNsisPath>
+  </PropertyGroup>
+    
+  <ItemGroup>
+    <ProjectToBuild Include="$(RootProjectDir)\Droppy\Droppy.csproj"/>
+  </ItemGroup>
+
+  <ItemGroup>
+    <RedistFile Include="$(RedistDir)\*.*"/>
+  </ItemGroup>
+  
+  <Target Name="Build">
+    <MSBuild Projects="@(ProjectToBuild)" Properties="Configuration=$(Configuration)" Targets="Build"/>
+    
+    <CallTarget Condition=" '$(Configuration)' == 'Release' " Targets="Deploy"/>
+  </Target>
+
+  <Target Name="Clean">
+    <MSBuild Projects="@(ProjectToBuild)" Properties="Configuration=$(Configuration)" Targets="Clean"/>
+
+    <CallTarget Condition=" '$(Configuration)' == 'Release' " Targets="CleanRedist"/>
+  </Target>
+
+  <Target Name="Rebuild" DependsOnTargets="Clean;Build"/>
+
+  <Target Name="Deploy" >
+    <!-- If this command fails, make sure you have installed NSIS (Nullsoft Scriptable Install System) package.
+         If NSIS installed, ensure that $(MakeNsisPath) as defined in above properties points to the installer
+         executable                                                                                             -->
+    <Exec Command="&quot;$(MakeNsisPath)&quot; &quot;$(installerProjPath)&quot;" />
+  </Target>
+
+  <Target Name="CleanRedist">
+    <Delete Files="@(RedistFile)"/>
+  </Target>
+  
+</Project>

@@ -2,8 +2,17 @@
 - Spend some time cleaning up code, maybe a little refactoring, definitely add a whole bunch of
   comments to a whole bunch of places
 - Cleanup project files and folders.  Also put resources in the right places
-- Produce a full build project that will create redistributable package.
+- Add ability to msbuild script to set product version
+	- Droppy.nsi must be updated (or maybe PRODUCT_VERSION string should be taken out into a
+	  a separate file
+	- AssemblyInfo.cs must be updated
+		http://blogs.msdn.com/b/msbuild/archive/2005/11/11/491947.aspx
+		http://code.dblock.org/productbuild-versioning-with-msbuild-ant-and-cruisecontrol
+		http://msbuildtasks.tigris.org/
+		
 ----------------------------------------------------------------------------------------------
+- droppy should check for updates and report if a new version of the app is available
+- droppy should be able to self-upgrade itself.
 - When resolution changes while the window is docked, it might end up being docked in the
   middle of the screen. Undocking and redocking it back fixes the placement.
 - disabled menu items are a bit too difficult to see.  Can their visibility be improved
@@ -33,6 +42,7 @@
 
 
 Completed:
+- Produce a full build project that will create redistributable package.
 - Produce NSIS installation project:
 	- "MainWindow" title will have to be changed to "Droppy"
 	- Create a start menu item for Droppy

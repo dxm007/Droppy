@@ -17,8 +17,8 @@
 ;------------------------------------------------------------------------------
 !define PROJECT_ROOT_FOLDER     "..\.."
 !define PRODUCT_NAME            "Droppy"
-!define SETUP_NAME              "${PRODUCT_NAME}Setup.exe"
-!define PRODUCT_VERSION         "1.0"
+!define PRODUCT_VERSION         "1.0.0.0"
+!define SETUP_NAME              "${PRODUCT_NAME}Setup-${PRODUCT_VERSION}.exe"
 !define APP_EXE_NAME            "${PRODUCT_NAME}.exe"
 !define APP_EXE_PATH            "$INSTDIR\${APP_EXE_NAME}"
 !define OUTPUT_DIRECTORY        "${PROJECT_ROOT_FOLDER}\Redist"
