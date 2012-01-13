@@ -22,7 +22,7 @@
                     xmlns:data="clr-namespace:Droppy.Data">
 
     <ResourceDictionary.MergedDictionaries>
-        <ResourceDictionary Source="Skins/Default/GarbageCanIcon.xaml" />
+        <ResourceDictionary Source="Resources/GarbageCanIcon.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
     <!-- Region ======================= Global Value Converters ================== -->
