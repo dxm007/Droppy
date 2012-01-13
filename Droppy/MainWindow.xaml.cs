@@ -97,7 +97,7 @@ namespace Droppy
 
             _windowAutoHider = new WindowAutoHider( this );
 
-            new MainWindowDockCoordinator( this, _windowAutoHider, docker );
+            new WindowDockMediator( this, _windowAutoHider, docker );
         }
 
         private void OnToolsBtnClick( object sender, RoutedEventArgs e )

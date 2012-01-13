@@ -20,11 +20,11 @@ using System.Windows;
 
 namespace Droppy
 {
-    class MainWindowDockCoordinator
+    class WindowDockMediator
     {
-        public MainWindowDockCoordinator( Window            parent,            
-                                          IWindowAutoHider  windowAutoHider,
-                                          IWindowDocker     windowDocker     )
+        public WindowDockMediator( Window parent,            
+                                   IWindowAutoHider  windowAutoHider,
+                                   IWindowDocker     windowDocker     )
         {
             _parent = parent;
             _autoHider = windowAutoHider;
@@ -32,7 +32,7 @@ namespace Droppy
 
             SetupSubscriptions();
 
-            UpdateMainWindowState();
+            UpdateWindowState();
         }
 
         private void SetupSubscriptions()
@@ -42,10 +42,10 @@ namespace Droppy
 
         private void OnDockStateChanged( object sender, DockStateChangedEventArgs e )
         {
-            UpdateMainWindowState();
+            UpdateWindowState();
         }
 
-        private void UpdateMainWindowState()
+        private void UpdateWindowState()
         {
             _autoHider.Mode = MapDockStateToAutoHideMode( _docker.State );
 
