@@ -30,11 +30,6 @@ namespace Droppy
 {
     public class FilePathTextBlock : TextBlock
     {
-        static FilePathTextBlock()
-        {
-            //DefaultStyleKeyProperty.OverrideMetadata( typeof( FilePathTextBlock ), new FrameworkPropertyMetadata( typeof( FilePathTextBlock ) ) );
-        }
-
         #region - - - - - - - - - - - - - - FilePath Dependency Property - - - - - - - - - - - -
 
         public static readonly DependencyProperty FilePathProperty = 
