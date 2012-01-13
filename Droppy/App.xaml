@@ -18,8 +18,7 @@
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="DefaultSkin.xaml"/>
-                <ResourceDictionary Source="temp3.xaml"/>
+                <ResourceDictionary Source="Resources\DefaultSkin.xaml"/>
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Application.Resources>

@@ -88,7 +88,7 @@
     <Compile Include="WidgetMatrix.xaml.cs">
       <DependentUpon>WidgetMatrix.xaml</DependentUpon>
     </Compile>
-    <Page Include="DefaultSkin.xaml">
+    <Page Include="Resources\DefaultSkin.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
