@@ -69,7 +69,7 @@
     <Compile Include="Data\WidgetDocument.cs" />
     <Compile Include="Controls\ResizeBarControl.cs" />
     <Compile Include="Controls\InPlaceEditBoxPopup.cs" />
-    <Compile Include="UI\MainWindowDockCoordinator.cs" />
+    <Compile Include="Utility\WindowDockMediator.cs" />
     <Compile Include="Utility\DesktopMonitorInfo.cs" />
     <Compile Include="Utility\WindowAutoHider.cs" />
     <Compile Include="Utility\DragDropHelper.cs" />
@@ -139,6 +139,9 @@
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Resources\AppIcon1.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="UI\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
