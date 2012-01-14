@@ -29,11 +29,40 @@ using System.Windows.Shapes;
 
 namespace Droppy
 {
-    public enum ThumbId : int { Left, Center, Right, NUM_THUMBS };
-
-
-    public class ResizeBarEventArgs : EventArgs
+    /// <summary>
+    /// Identifies the portion of the resize bar that is being dragged by the mouse
+    /// </summary>
+    enum ThumbId : int
     {
+        /// <summary>Identifies left portion of the bar</summary>
+        Left,
+
+        /// <summary>Identifies center portion of the bar</summary>
+        Center,
+
+        /// <summary>Identifies right portion of the bar</summary>
+        Right,
+
+        /// <summary>Identifies the count of possible, valid ThumbId enumeration values</summary>
+        NUM_THUMBS
+    };
+
+
+    /// <summary>
+    /// Event arguments type used by Resize event which is raised by the ResizeBarControl
+    /// </summary>
+    class ResizeBarEventArgs : EventArgs
+    {
+        /// <summary>
+        /// Initializing constructor
+        /// </summary>
+        /// <param name="leftDelta">Difference in X location of a window since the time the last
+        /// event has fired.</param>
+        /// <param name="widthDelta">Difference in width of a window since the time the last
+        /// event has fired.</param>
+        /// <param name="heightDelta">Difference in height of a window since the time the last
+        /// event has fired.</param>
+        /// <param name="thumbId">Identifies which portion of the resize bar is being dragged</param>
         public ResizeBarEventArgs( double leftDelta, double widthDelta, double heightDelta, ThumbId thumbId )
         {
             _leftDelta = leftDelta;
@@ -42,9 +71,24 @@ namespace Droppy
             _thumbId = thumbId;
         }
 
+        /// <summary>
+        /// Gets the difference in X location of a window since the time the last event has fired.
+        /// </summary>
         public double LeftDelta { get { return _leftDelta; } }
+
+        /// <summary>
+        /// Gets the difference in width of a window since the time the last event has fired.
+        /// </summary>
         public double WidthDelta { get { return _widthDelta; } }
+
+        /// <summary>
+        /// Gets the difference in height of a window since the time the last event has fired.
+        /// </summary>
         public double HeightDelta { get { return _heightDelta; } }
+
+        /// <summary>
+        /// Gets the value which identifies the portion of the resize bar that is being dragged.
+        /// </summary>
         public ThumbId ThumbId { get { return _thumbId; } }
 
         private double _leftDelta;
@@ -55,23 +99,48 @@ namespace Droppy
 
 
     /// <summary>
+    /// Resize bar custom control
     /// </summary>
-    public class ResizeBarControl : Control
+    /// <remarks>
+    /// This control is designed specifically to go onto the bottom edge of the window. It expects to operate
+    /// with a control template which consists of 3 thumb areas:
+    ///     * Left - When dragged, the change in window X location as well as window width are reported
+    ///     * Center - When dragged, the change in window height is reported
+    ///     * Right - When dragged, the change in window width is reported
+    ///     
+    /// It is important to note that this control only reports what window location and size should be updated to
+    /// based on mouse movements, but it does not actually resize the window. External listener must be attached 
+    /// to Resize and/or ResizeComplete events to carry out window resizing/repositioning
+    /// </remarks>
+    class ResizeBarControl : Control
     {
-        static ResizeBarControl()
-        {
-            DefaultStyleKeyProperty.OverrideMetadata( typeof( ResizeBarControl ), new FrameworkPropertyMetadata( typeof( ResizeBarControl ) ) );
-        }
+        #region ----------------------- Public Members ------------------------
 
+        /// <summary>
+        /// Default constructor
+        /// </summary>
         public ResizeBarControl()
         {
             _thumbControls = new Thumb[ (int)ThumbId.NUM_THUMBS ];
         }
 
+        #region - - - - - - - Events - - - - - - - - - - - - - - - - - - - - - -
+
+        /// <summary>
+        /// An event that gets fired whenever a user clicks and drags on any draggable part of the resize
+        /// bar control. It will continue to be generated as the drag operation continues
+        /// </summary>
         public event EventHandler< ResizeBarEventArgs > Resize;
-        public event EventHandler                       ResizeComplete;
 
+        /// <summary>
+        /// An event that gets fired whenever a user releases left mouse button and resize operation is
+        /// terminated.
+        /// </summary>
+        public event EventHandler ResizeComplete;
 
+        #endregion
+
+        /// <inheritdoc/>
         public override void OnApplyTemplate()
         {
             base.OnApplyTemplate();
@@ -85,6 +154,18 @@ namespace Droppy
             SubscribeThumbEvents();
         }
 
+        #endregion
+
+        #region ----------------------- Protected Members ---------------------
+
+        /// <summary>
+        /// Gets invoked whenever one of draggable parts of the resize bar control is being dragged by
+        /// the mouse. If this function is overridden, the deriving class should make sure to invoke base 
+        /// implementation.
+        /// </summary>
+        /// <param name="leftDelta">Specifies by how much left edge of the window should move</param>
+        /// <param name="widthDelta">Specifies by how much window width should change</param>
+        /// <param name="heightDelta">Specifies by how much window height should change</param>
         protected virtual void OnResize( double leftDelta, double widthDelta, double heightDelta )
         {
             if( Resize != null )
@@ -93,6 +174,10 @@ namespace Droppy
             }
         }
 
+        /// <summary>
+        /// Gets invoked whenever a user terminates resize operation by releasing the mouse button
+        /// If this function is overridden, the deriving class should make sure to invoke the base implementation.
+        /// </summary>
         protected virtual void OnResizeComplete()
         {
             if( ResizeComplete != null )
@@ -100,7 +185,16 @@ namespace Droppy
                 ResizeComplete( this, new EventArgs() );
             }
         }
-        
+
+        #endregion
+
+        #region ----------------------- Private Members -----------------------
+
+        static ResizeBarControl()
+        {
+            DefaultStyleKeyProperty.OverrideMetadata( typeof( ResizeBarControl ), new FrameworkPropertyMetadata( typeof( ResizeBarControl ) ) );
+        }
+
         private void SubscribeThumbEvents()
         {
             foreach( var t in _thumbControls.Select( (x,i)=>new{ ctrl=x, idx=i} ) )
@@ -177,5 +271,7 @@ namespace Droppy
         private double      _leftMultiplier;
         private double      _widthMultplier;
         private double      _heightMultplier;
+
+        #endregion
     }
 }

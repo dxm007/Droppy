@@ -32,19 +32,24 @@ using Droppy.Data;
 
 namespace Droppy
 {
-    class WidgetMatrixData
-    {
-        public int Rows { get; set; }
-        public int Columns { get; set; }
-        public Data.WidgetContainerData Source { get; set; }
-        public Array2D<WidgetSiteControl> SiteGrid { get; set; }
-    }
-
     /// <summary>
-    /// Interaction logic for WidgetMatrix.xaml
+    /// A user control which contains two-dimensional grid of widget sites. Depending on the data
+    /// binding of a particular cell, each site presents one of the WidgetControl-derived controls.
     /// </summary>
-    public partial class WidgetMatrix : UserControl
+    /// <remarks>
+    /// This control supports data binding through Source property to a Data.WidgetContainerData
+    /// object which holds the data presented by the control. Widget container data includes the
+    /// size of the matrix to be displayed as well as data elements to be presented in each of
+    /// the cells.  If a cell has no data (i.e. null value), EmptyWidgetControl is placed into the
+    /// site for that matrix cell.
+    /// </remarks>
+    partial class WidgetMatrix : UserControl
     {
+        #region ----------------------- Public Members ------------------------
+
+        /// <summary>
+        /// Default constructor 
+        /// </summary>
         public WidgetMatrix()
         {
             InitializeComponent();
@@ -54,12 +59,19 @@ namespace Droppy
             new WidgetMatrixDropHelper( this, _controlData );
         }
 
+        /// <summary>
+        /// Gets/sets a widget container data object which this control is to be bound to. The
+        /// data object fully defines what is being presented by this matrix control
+        /// </summary>
         public Data.WidgetContainerData Source
         {
             get { return _controlData.Source; }
             set { if( _controlData.Source != value ) UpdateSource( value ); }
         }
 
+        /// <summary>
+        /// Returns the number of rows being displayed
+        /// </summary>
         public int Rows
         {
             get
@@ -69,6 +81,9 @@ namespace Droppy
             }
         }
 
+        /// <summary>
+        /// Returns the number of columns being displayed
+        /// </summary>
         public int Columns
         {
             get
@@ -77,6 +92,10 @@ namespace Droppy
                 return source != null ? source.Bounds.ColumnCount : 0;
             }
         }
+
+        #endregion
+
+        #region ----------------------- Private Members -----------------------
 
         private void UpdateGrid( bool withAnimation )
         {
@@ -269,13 +288,41 @@ namespace Droppy
 
 
         private WidgetMatrixData    _controlData;
+
+        #endregion
     }
 
 
+    /// <summary>
+    /// Data object for WidgetMatrix control. This class is used to preserve hierarchical dependency
+    /// relationship between WidgetMatrix and the behavior classes it internally instantiates
+    /// </summary>
+    class WidgetMatrixData
+    {
+        public int Rows { get; set; }
+        public int Columns { get; set; }
+        public Data.WidgetContainerData Source { get; set; }
+        public Array2D<WidgetSiteControl> SiteGrid { get; set; }
+    }
 
 
+    /// <summary>
+    /// Extends DropHelper to provide specific drag-drop behavior for the WidgetMatrix control
+    /// </summary>
+    /// <remarks>
+    /// The custom behavior this class adds is to monitor the location of the mouse cursor and apply 
+    /// TranslateTransform to other elements in the WidgetMatrix so that they appear to move out of the
+    /// way of the widget that is being dropped.
+    /// </remarks>
     class WidgetMatrixDropHelper : DropHelper
     {
+        #region ----------------------- Public Members ------------------------
+
+        /// <summary>
+        /// Initializing constructor
+        /// </summary>
+        /// <param name="parent">Parent widget matrix control which is to support drop operations</param>
+        /// <param name="data">Widget matrix control data</param>
         public WidgetMatrixDropHelper( WidgetMatrix parent, WidgetMatrixData data ) : base( parent )
         {
             _parent = parent;
@@ -283,7 +330,11 @@ namespace Droppy
             _prevRelocatedSites = new List<SiteShiftInfo>();
         }
 
+        #endregion
 
+        #region ----------------------- Protected Base Overrides --------------
+
+        /// <inheritdoc/>
         protected override void OnQueryDragDataValid( object sender, DragEventArgs e )
         {
             base.OnQueryDragDataValid( sender, e );
@@ -294,18 +345,50 @@ namespace Droppy
             }
         }
 
-        protected override void OnTargetDrop(object sender, DragEventArgs e)
+        /// <inheritdoc/>
+        protected override void OnTargetDrop( object sender, DragEventArgs e )
         {
             base.OnTargetDrop( sender, e );
 
             ProcessDataObject( e, CommitMove );
         }
 
-        protected override void OnRealTargetDragLeave(object sender, DragEventArgs e)
+        /// <inheritdoc/>
+        protected override void OnRealTargetDragLeave( object sender, DragEventArgs e )
         {
             base.OnRealTargetDragLeave( sender, e );
 
             CancelMove();
+        }
+
+        #endregion
+
+        #region ----------------------- Private Members -----------------------
+
+        class SiteShiftInfo
+        {
+            public WidgetSiteControl    site;
+            public Data.WidgetData      widget;
+            public double               translateX;
+            public double               translateY;
+            public MatrixLoc            newLocation;
+        }
+
+        class SiteShiftInfoComparer : IEqualityComparer<SiteShiftInfo>
+        {
+            public bool Equals( SiteShiftInfo x, SiteShiftInfo y )
+            {
+                return x.site == y.site;
+            }
+
+            public int GetHashCode( SiteShiftInfo obj )
+            {
+                return obj.site.GetHashCode();
+            }
+
+            public static IEqualityComparer<SiteShiftInfo> Comparer { get { return _comparer; } }
+
+            private static SiteShiftInfoComparer _comparer = new SiteShiftInfoComparer();
         }
 
 
@@ -349,40 +432,11 @@ namespace Droppy
             return true;
         }
 
-
-
-        class SiteShiftInfo
-        {
-            public WidgetSiteControl    site;
-            public Data.WidgetData      widget;
-            public double               translateX;
-            public double               translateY;
-            public MatrixLoc            newLocation;
-        }
-
-        class SiteShiftInfoComparer : IEqualityComparer< SiteShiftInfo >
-        {
-            public bool Equals( SiteShiftInfo x, SiteShiftInfo y )
-            {
-                return x.site == y.site;
-            }
-
-            public int GetHashCode( SiteShiftInfo obj )
-            {
-                return obj.site.GetHashCode();
-            }
-
-            public static IEqualityComparer< SiteShiftInfo > Comparer { get { return _comparer; } }
-
-            private static SiteShiftInfoComparer _comparer = new SiteShiftInfoComparer();
-        }
-
-
         private void UpdateMatrixUI( MatrixLoc insertLoc, WidgetSiteDragDropData data )
         {
             List< SiteShiftInfo >       relocatedSites;
 
-            relocatedSites = GetShiftedSiteList( insertLoc, data );
+            relocatedSites = CalculateWhichSitesToShift( insertLoc, data );
 
             var sitesToMove = relocatedSites.Except( _prevRelocatedSites, SiteShiftInfoComparer.Comparer ).ToList();
             var sitesToReverse = _prevRelocatedSites.Except( relocatedSites, SiteShiftInfoComparer.Comparer ).ToList();
@@ -404,7 +458,7 @@ namespace Droppy
         {
             List< SiteShiftInfo >   relocatedSites;
 
-            relocatedSites = GetShiftedSiteList( insertLoc, data );
+            relocatedSites = CalculateWhichSitesToShift( insertLoc, data );
 
             if( relocatedSites.Count > 0 )
             {
@@ -435,7 +489,7 @@ namespace Droppy
             _prevRelocatedSites.Clear();
         }
 
-        private List< SiteShiftInfo > GetShiftedSiteList( MatrixLoc insertLoc, WidgetSiteDragDropData data )
+        private List< SiteShiftInfo > CalculateWhichSitesToShift( MatrixLoc insertLoc, WidgetSiteDragDropData data )
         {
             MatrixLoc                   sourceLoc = data.Site.Location;
             List< SiteShiftInfo >       relocatedSites;
@@ -530,6 +584,8 @@ namespace Droppy
         private WidgetMatrix                    _parent;
         private WidgetMatrixData                _controlData;
         private List< SiteShiftInfo >           _prevRelocatedSites;
+
+        #endregion
     }
 
 }

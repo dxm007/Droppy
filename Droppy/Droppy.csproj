@@ -31,6 +31,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <DocumentationFile>bin\Debug\Droppy.XML</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
     <PlatformTarget>x86</PlatformTarget>
@@ -69,6 +70,8 @@
     <Compile Include="Data\WidgetDocument.cs" />
     <Compile Include="Controls\ResizeBarControl.cs" />
     <Compile Include="Controls\InPlaceEditBoxPopup.cs" />
+    <Compile Include="UI Behaviors\MainWindowResizer.cs" />
+    <Compile Include="UI Behaviors\TrashCanPopupManager.cs" />
     <Compile Include="Utility\WindowDockMediator.cs" />
     <Compile Include="Utility\DesktopMonitorInfo.cs" />
     <Compile Include="Utility\WindowAutoHider.cs" />
@@ -140,9 +143,7 @@
   <ItemGroup>
     <Resource Include="Resources\AppIcon1.ico" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="UI\" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

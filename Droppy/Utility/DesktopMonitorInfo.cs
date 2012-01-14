@@ -21,7 +21,7 @@ using System.Windows.Threading;
 
 namespace Droppy
 {
-    public class MonitorInfo
+    class MonitorInfo
     {
         public MonitorInfo( Win32.MonitorInfo info )
         {
@@ -61,7 +61,7 @@ namespace Droppy
         private bool        _isStale;
     }
 
-    public class DesktopMonitorInfo
+    class DesktopMonitorInfo
     {
         public DesktopMonitorInfo( Dispatcher dispatcher )
         {

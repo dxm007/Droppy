@@ -28,14 +28,38 @@ using System.Windows.Shapes;
 
 namespace Droppy
 {
-    public class FilePathTextBlock : TextBlock
+    /// <summary>
+    /// A text block control which is designed specifically for displaying file paths.
+    /// </summary>
+    /// <remarks>
+    /// The goal of this control is to display as much of a file path as possible but if it has to be
+    /// clipped, the priority is given to the directories deepest in the hierarchy. It also guarantees
+    /// that the first letter of the last directory's name is always guaranteed to be visible.
+    /// 
+    /// For example, if this is the path: c:\development\personal\droppy\images, then these would be
+    /// possible displayed strings depending on how wide the control is:
+    ///     * c:\development\personal\droppy\UI Behavior
+    ///     * ...onal\droppy\UI Behavior
+    ///     * ...oppy\UI Behavior
+    ///     * UI Behavior
+    ///     * UI Beha...
+    /// </remarks>
+    class FilePathTextBlock : TextBlock
     {
-        #region - - - - - - - - - - - - - - FilePath Dependency Property - - - - - - - - - - - -
+        #region ----------------------- Public Members ------------------------
 
+        #region - - - - - - - FilePath Dependency Property- - - - - - - - - - -
+
+        /// <summary>
+        /// Identifies FilePathTextBlock.FilePath dependency property
+        /// </summary>
         public static readonly DependencyProperty FilePathProperty = 
                 DependencyProperty.Register( "FilePath", typeof( string ), typeof( FilePathTextBlock ),
                                              new FrameworkPropertyMetadata( ( d, e ) => ( (FilePathTextBlock)d ).OnFilePathChanged( e ) ) );
 
+        /// <summary>
+        /// Gets/Sets file path string which is to be displayed by the control
+        /// </summary>
         public string FilePath
         {
             get { return (string)GetValue( FilePathProperty ); }
@@ -44,13 +68,20 @@ namespace Droppy
 
         #endregion
 
-        #region - - - - - - - - - - - - - - IsTextClipped(read-only) Dependency Property - - - - - - - - - - - -
+        #region - - - - - - - IsTextClipped Read-Only Dependency Property - - -
 
         private static readonly DependencyPropertyKey IsTextClippedPropertyKey = 
                 DependencyProperty.RegisterReadOnly( "IsTextClipped", typeof( bool ), typeof( FilePathTextBlock ),
                                                      new FrameworkPropertyMetadata( false  )                       );
+
+        /// <summary>
+        /// Identifies FilePathTextBlock.IsTextClipped read-only dependency property
+        /// </summary>
         public static readonly DependencyProperty IsTextClippedProperty = IsTextClippedPropertyKey.DependencyProperty;
 
+        /// <summary>
+        /// Gets a flag which indicates whether or not currently displayed file path is clipped 
+        /// </summary>
         public bool IsTextClipped
         {
             get { return (bool)GetValue( IsTextClippedProperty ); }
@@ -59,6 +90,11 @@ namespace Droppy
 
         #endregion
 
+        #endregion
+
+        #region ----------------------- Protected Base Overrides --------------
+
+        /// <inheritdoc/>
         protected override void OnRenderSizeChanged( SizeChangedInfo sizeInfo )
         {
             base.OnRenderSizeChanged( sizeInfo );
@@ -66,12 +102,15 @@ namespace Droppy
             if( FilePath != null ) CalculateTextProperty();
         }
 
+        #endregion
+
+        #region ----------------------- Private Members -----------------------
+
         private void OnFilePathChanged( DependencyPropertyChangedEventArgs e )
         {
             CalculateTextProperty();
         }
-
-
+        
         private void CalculateTextProperty()
         {
             double  availableWidth = ActualWidth - Padding.Width();
@@ -155,5 +194,7 @@ namespace Droppy
 
 
         private GlyphTypeface    _glyphTypeface;
+
+        #endregion
     }
 }

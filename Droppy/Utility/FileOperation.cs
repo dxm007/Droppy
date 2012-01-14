@@ -24,7 +24,7 @@ using System.Windows.Interop;
 
 namespace Droppy
 {
-    public enum FILEOP_CODES : uint
+    enum FILEOP_CODES : uint
     {
         FO_MOVE     = 0x0001,
         FO_COPY     = 0x0002,
@@ -33,7 +33,7 @@ namespace Droppy
     }
 
     [Flags]
-    public enum FILEOP_FLAGS
+    enum FILEOP_FLAGS
     {
         FOF_MULTIDESTFILES          = 0x00000001,
         FOF_CONFIRMMOUSE            = 0x00000002,
@@ -69,7 +69,7 @@ namespace Droppy
 
     }
 
-    public interface IFileOperation
+    interface IFileOperation
     {
         Window ParentWindow { get; set; }
         FILEOP_CODES Operation { get; set; }
@@ -84,7 +84,7 @@ namespace Droppy
     }
 
 
-    public class FileOperationG1 : IFileOperation
+    class FileOperationG1 : IFileOperation
     {
         public FileOperationG1()
         {

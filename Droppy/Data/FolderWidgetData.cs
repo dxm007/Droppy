@@ -21,21 +21,39 @@ using System.Xml.Serialization;
 
 namespace Droppy.Data
 {
+
+    /// <summary>
+    /// Data object for a folder widget
+    /// </summary>
     [Serializable]
-    public class FolderWidgetData : WidgetData
+    class FolderWidgetData : WidgetData
     {
+        #region ----------------------- Public Members ------------------------
+
+        /// <summary>
+        /// Gets/sets a path to a folder
+        /// </summary>
         public string Path
         {
             get { return _path; }
             set { _path = value; IsDirty = true; }
         }
 
+        /// <summary>
+        /// Gets/sets a custom label for a folder. By default, if a client doesn't provide a label, this
+        /// property will return Path property
+        /// </summary>
         public string Label
         {
             get { return string.IsNullOrEmpty( _label ) ? _path : _label; }
             set { _label = value; IsDirty = true; }
         }
 
+        #endregion
+
+        #region ----------------------- Protected Members ---------------------
+
+        /// <inheritdoc/>
         protected override void SerializeToXml( XmlWriter writer )
         {
             writer.WriteAttributeString( "path", _path );
@@ -46,14 +64,20 @@ namespace Droppy.Data
             }
         }
 
+        /// <inheritdoc/>
         protected override void DeserializeFromXml( XmlReader reader )
         {
             _path = reader.GetAttribute( "path" );
             _label = reader.GetAttribute( "label" );
         }
 
+        #endregion
+
+        #region ----------------------- Private Members -----------------------
 
         private string      _path;
         private string      _label;
+
+        #endregion
     }
 }

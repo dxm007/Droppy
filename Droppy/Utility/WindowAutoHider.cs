@@ -23,7 +23,7 @@ using System.Windows.Threading;
 
 namespace Droppy
 {
-    public enum AutoHideMode
+    enum AutoHideMode
     {
         None,
         CollapseLeft,
@@ -42,7 +42,7 @@ namespace Droppy
     }
 
 
-    public enum AutoHideState
+    enum AutoHideState
     {
         Visible,
         Collapsed,
@@ -51,7 +51,7 @@ namespace Droppy
     }
 
 
-    public interface IWindowAutoHider
+    interface IWindowAutoHider
     {
         AutoHideMode Mode { get; set; }
 
@@ -65,7 +65,7 @@ namespace Droppy
     }
 
 
-    public class WindowAutoHiderParams
+    class WindowAutoHiderParams
     {
         public WindowAutoHiderParams()
         {
@@ -88,7 +88,7 @@ namespace Droppy
     }
 
 
-    public class WindowAutoHider : IWindowAutoHider
+    class WindowAutoHider : IWindowAutoHider
     {
         public WindowAutoHider( Window parent )
                 : this( parent, new WindowAutoHiderParams() )

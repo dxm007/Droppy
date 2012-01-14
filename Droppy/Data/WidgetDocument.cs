@@ -24,18 +24,28 @@ using System.Xml.Serialization;
 
 namespace Droppy.Data
 {
-    public enum WidgetDocSaveFormat
+    /// <summary>
+    /// Indicates which format should be used when saving/loading the document
+    /// </summary>
+    enum WidgetDocSaveFormat
     {
         Binary,
         Xml
     }
 
-    public class WidgetDocument
+    /// <summary>
+    /// The root of widget data object hierarchy. This class is where everything starts. It is responsible
+    /// for loading, saving and maintaining the contained widget data model.
+    /// </summary>
+    class WidgetDocument
     {
-        public WidgetDocument()
-        {
-        }
+        #region ----------------------- Public Members ------------------------
 
+        #region - - - - - - - Properties  - - - - - - - - - - - - - - - - - - -
+
+        /// <summary>
+        /// Gets the top-level widget container data object
+        /// </summary>
         public WidgetContainerData Root
         {
             get { return _rootNode; }
@@ -65,6 +75,10 @@ namespace Droppy.Data
             }
         }
 
+        /// <summary>
+        /// Gets/sets a flag which indicates whether or not widget document needs to be written out
+        /// to disk because something was modified
+        /// </summary>
         public bool IsDirty
         {
             get { return _rootNode != null ? _rootNode.IsDirty : false; }
@@ -82,10 +96,25 @@ namespace Droppy.Data
             }
         }
 
+        #endregion
+        
+        #region - - - - - - - Events  - - - - - - - - - - - - - - - - - - - - -
 
+        /// <summary>
+        /// Gets fired whenever the value of IsDirty property changes
+        /// </summary>
         public event EventHandler IsDirtyChanged;
 
+        #endregion
 
+        /// <summary>
+        /// Loads widget data. This function loads data from default, application-specific isolated storage location
+        /// </summary>
+        /// <remarks>
+        /// When this function is used, the application need not be concerned with or where the application data is 
+        /// stored. Once this method is called, internall the WidgetDocument will take care of locating and opening 
+        /// the persistent file.
+        /// </remarks>
         public void Load()
         {
             try
@@ -106,6 +135,11 @@ namespace Droppy.Data
             }
         }
 
+        /// <summary>
+        /// Loads widget data from an external file whose format must match the specified format that is expected
+        /// </summary>
+        /// <param name="filePath">Path to the file to be opened</param>
+        /// <param name="format">Identifies the expected format of the file being opened</param>
         public void Load( string filePath, WidgetDocSaveFormat format )
         {
             using( Stream stream = new FileStream( filePath, FileMode.Open, FileAccess.Read, FileShare.Read ) )
@@ -114,6 +148,11 @@ namespace Droppy.Data
             }
         }
 
+        /// <summary>
+        /// Loads widget data from a stream whose format must match the specified format that is expected.
+        /// </summary>
+        /// <param name="stream">Stream object which contains serialized data</param>
+        /// <param name="format">Identifies the expected format of the stream being read</param>
         public void Load( Stream stream, WidgetDocSaveFormat format )
         {
             WidgetContainerData     container = null;
@@ -143,6 +182,14 @@ namespace Droppy.Data
             this.Root = container;
         }
 
+        /// <summary>
+        /// Saves widget data. This function saves the data in default, application-specific isolated storage location
+        /// </summary>
+        /// <remarks>
+        /// When this function is used, the application need not be concerned with or where the application data is 
+        /// stored. Once this method is called, internall the WidgetDocument will take care of opening and saving to 
+        /// the persistent file.
+        /// /// </remarks>
         public void Save()
         {
             using( IsolatedStorageFile isf = IsolatedStorageFile.GetUserStoreForAssembly() )
@@ -152,6 +199,11 @@ namespace Droppy.Data
             }
         }
 
+        /// <summary>
+        /// Saves widget data object hierarchy to an external file whose format is specified
+        /// </summary>
+        /// <param name="filePath">File path referencing a new file to be created</param>
+        /// <param name="format">Specifies the format in which the file is to be written out</param>
         public void Save( string filePath, WidgetDocSaveFormat format )
         {
             using( Stream stream = new FileStream( filePath, FileMode.Create, FileAccess.Write, FileShare.None ) )
@@ -160,6 +212,11 @@ namespace Droppy.Data
             }
         }
 
+        /// <summary>
+        /// Saves widget data object hierarchy to a stream using the specified serialization format
+        /// </summary>
+        /// <param name="stream">Stream object where serialized data is to be written to</param>
+        /// <param name="format">Specifies the format in which the file is to be written out</param>
         public void Save( Stream stream, WidgetDocSaveFormat format )
         {
             if( format == WidgetDocSaveFormat.Xml )
@@ -181,6 +238,9 @@ namespace Droppy.Data
             }
         }
 
+        #endregion
+
+        #region ----------------------- Private Members -----------------------
 
         private void OnRootNodeIsDirtyChanged( object sender, EventArgs e )
         {
@@ -197,5 +257,7 @@ namespace Droppy.Data
 
         private WidgetContainerData             _rootNode;
         private const WidgetDocSaveFormat       _defaultSaveFormat = WidgetDocSaveFormat.Binary;
+
+        #endregion
     }
 }

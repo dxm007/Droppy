@@ -29,9 +29,17 @@ using System.Windows.Shapes;
 
 namespace Droppy
 {
+    interface IFreezableAutoHideWindow
+    {
+        void FreezeAutoHide();
+
+        void UnfreezeAutoHide();
+    }
+
+
     /// <summary>
     /// </summary>
-    public class EmptyWidgetControl : WidgetControl
+    class EmptyWidgetControl : WidgetControl
     {
         static EmptyWidgetControl()
         {
@@ -43,21 +51,24 @@ namespace Droppy
             new FileDropHelper( this, false ).FileDrop += OnDrop;
         }
 
+        /// <inheritdoc/>
         public override void OnApplyTemplate()
         {
             base.OnApplyTemplate();
         }
 
+        /// <inheritdoc/>
         protected override void OnClick( object sender, RoutedEventArgs e )
         {
-            MainWindow  parentWindow = MainWindow.GetWindow( this );
+            var     parentWindow = Window.GetWindow( this );
+            var     autoHideControl = parentWindow as IFreezableAutoHideWindow;
 
-            var dlg = new System.Windows.Forms.FolderBrowserDialog();
+            var     dlg = new System.Windows.Forms.FolderBrowserDialog();
 
             dlg.Description = "Select a folder";
             dlg.ShowNewFolderButton = true;
 
-            parentWindow.FreezeAutoHide();
+            if( autoHideControl != null ) autoHideControl.FreezeAutoHide();
 
             try
             {
@@ -68,7 +79,7 @@ namespace Droppy
             }
             finally
             {
-                parentWindow.UnfreezeAutoHide();
+                if( autoHideControl != null ) autoHideControl.UnfreezeAutoHide();
             }
         }
 
@@ -92,7 +103,7 @@ namespace Droppy
 
 
 
-    public class FileDropEventArgs : EventArgs
+    class FileDropEventArgs : EventArgs
     {
         public FileDropEventArgs( FrameworkElement source, bool isMove, string[] files ) : base()
         {
@@ -112,7 +123,7 @@ namespace Droppy
         private bool                _isMove;
     }
 
-    public class FileDropHelper : DropHelper
+    class FileDropHelper : DropHelper
     {
         public FileDropHelper( FrameworkElement parent, bool allowMultiple )
                     : base( parent )
@@ -122,7 +133,8 @@ namespace Droppy
 
         public event EventHandler< FileDropEventArgs >  FileDrop;
 
-        protected override void OnTargetDrop(object sender, DragEventArgs e)
+        /// <inheritdoc/>
+        protected override void OnTargetDrop( object sender, DragEventArgs e )
         {
             string[] files = e.Data.GetData( "FileDrop" ) as string[];
 
@@ -136,6 +148,7 @@ namespace Droppy
             base.OnTargetDrop( sender, e );
         }
 
+        /// <inheritdoc/>
         protected override void OnQueryDragDataValid( object sender, DragEventArgs eventData )
         {
             string[] files = eventData.Data.GetData( "FileDrop" ) as string[];

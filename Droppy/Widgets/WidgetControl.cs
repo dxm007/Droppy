@@ -29,7 +29,7 @@ using System.Windows.Shapes;
 
 namespace Droppy
 {
-    public abstract class WidgetControl : Control
+    abstract class WidgetControl : Control
     {
         public WidgetSiteControl Site
         {

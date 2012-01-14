@@ -21,7 +21,7 @@ using System.Windows.Media;
 
 namespace Droppy
 {
-    public class MouseEx
+    class MouseEx
     {
         public static Point GetPosition(Visual relativeTo)
         {

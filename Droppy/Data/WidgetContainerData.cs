@@ -23,8 +23,11 @@ using System.Xml.Serialization;
 
 namespace Droppy.Data
 {
+    /// <summary>
+    /// Specifies the justification of existing widget container cells when the container is being resized
+    /// </summary>
     [Flags]
-    public enum WidgetContainerResizeJustify
+    enum WidgetContainerResizeJustify
     {
         Left    = 0x00,
         Right   = 0x01,
@@ -32,8 +35,19 @@ namespace Droppy.Data
         Bottom  = 0x02
     }
 
-    public class WidgetContainerChangedEventArgs : EventArgs
+
+    /// <summary>
+    /// Event arguments for collection change events raised by the WidgetContainerData class
+    /// </summary>
+    class WidgetContainerChangedEventArgs : EventArgs
     {
+        /// <summary>
+        /// Initializing constructor
+        /// </summary>
+        /// <param name="action">Specifies if a widget was added, removed or replaced</param>
+        /// <param name="location">Location of the changed widget</param>
+        /// <param name="oldWidget">Reference to the original widget, or null if there wasn't any</param>
+        /// <param name="newWidget">Reference to the new widget, or null if there isn't any</param>
         public WidgetContainerChangedEventArgs( NotifyCollectionChangedAction   action,
                                                 MatrixLoc                       location,
                                                 WidgetData                      oldWidget,
@@ -45,9 +59,24 @@ namespace Droppy.Data
             _newWidget = newWidget;
         }
 
+        /// <summary>
+        /// Specifies if a widget was added, removed or replaced
+        /// </summary>
         public NotifyCollectionChangedAction Action { get { return _action; } }
+
+        /// <summary>
+        /// Location of the changed widget
+        /// </summary>
         public WidgetData OldWidget { get { return _oldWidget; } }
+
+        /// <summary>
+        /// Reference to the new widget, or null if there isn't any
+        /// </summary>
         public WidgetData NewWidget { get { return _newWidget; } }
+
+        /// <summary>
+        /// Reference to the original widget, or null if there wasn't any
+        /// </summary>
         public MatrixLoc Location { get { return _location; } }
 
         private NotifyCollectionChangedAction   _action;
@@ -56,55 +85,111 @@ namespace Droppy.Data
         private WidgetData                      _newWidget;
     }
 
-    public delegate void WidgetContainerChangedEventHandler( object sender, WidgetContainerChangedEventArgs e );
+
+    /// <summary>
+    /// Event handler type for WidgetContainerData's collection change events
+    /// </summary>
+    /// <param name="sender">Reference to the object raising the event</param>
+    /// <param name="e">Event data</param>
+    delegate void WidgetContainerChangedEventHandler( object sender, WidgetContainerChangedEventArgs e );
 
 
+    /// <summary>
+    /// Data object for a widget container.  The container itself is a type of widget. This allows the possibility
+    /// of a container being nested within another container creating a hierarchy of widgets.
+    /// </summary>
     [Serializable]
-    public class WidgetContainerData : WidgetData
+    class WidgetContainerData : WidgetData
     {
+        #region ----------------------- Public Members ------------------------
+
+        /// <summary>
+        /// Default constructor
+        /// </summary>
         public WidgetContainerData()
         {
         }
 
+        /// <summary>
+        /// Initializing constructor
+        /// </summary>
+        /// <param name="numRows">Number of rows to allocate in the container</param>
+        /// <param name="numColumns">Number of columns to allocate in the container</param>
         public WidgetContainerData( int numRows, int numColumns )
         {
-            _widgetArray = new  Array2D<WidgetData>( numRows, numColumns );
+            _widgetArray = new Array2D<WidgetData>( numRows, numColumns );
             _containerBounds.Size = _widgetArray.Size;
         }
 
+        #region - - - - - - - Properties  - - - - - - - - - - - - - - - - - - -
+
+        /// <summary>
+        /// Gets the coordinates of the rectangle bounding the container. Note that the bounds include size as well
+        /// as the location of top-left corner of the rectangle. This is necessary since its possible to resize the
+        /// container with right/button justification which will make left/top edge of the container to change in
+        /// position
+        /// </summary>
         public MatrixRect Bounds { get { return _containerBounds; } }
 
+        /// <summary>
+        /// Gets the size of the widget container
+        /// </summary>
         public MatrixSize Size { get { return this.Bounds.Size; } }
 
-        //public WidgetData this[ int row, int column ]
-        //{
-        //    get { return this[ new MatrixLoc( row, column ) ]; }
-        //    set { this[ new MatrixLoc( row, column ) ] = value; }
-        //}
-
+        /// <summary>
+        /// Gets/sets a widget at a specified location in the container
+        /// </summary>
+        /// <param name="location">Location to access/modify</param>
         public WidgetData this[ MatrixLoc location ]
         {
             get { return _widgetArray[ _containerBounds.ToIndex( location ) ]; }
             set { SetWidget( location, value ); }
         }
 
+        #endregion 
+
+        #region - - - - - - - Events  - - - - - - - - - - - - - - - - - - - - -
+
+        /// <summary>
+        /// Gets fired whenever a widget is added, removed or replaced in the container
+        /// </summary>
         public event WidgetContainerChangedEventHandler  ContainerChanged
         {
             add { _containerChangedEvent += value; }
             remove { _containerChangedEvent -= value; }
         }
 
+        /// <summary>
+        /// Gets fired whenever container size changes
+        /// </summary>
         public event EventHandler ContainerResized
         {
             add { _containerResizedEvent += value; }
             remove { _containerResizedEvent -= value; }
         }
 
+        #endregion
+
+        /// <summary>
+        /// Resizes the container to the specified size
+        /// </summary>
+        /// <param name="numRows">Number of rows to resize to</param>
+        /// <param name="numColumns">Number of columns to resize to</param>
+        /// <param name="justify">Resize justification, which indicates the edge at which widgets are to
+        /// remain in their current positions (i.e. right justification will make the left edge move left/right
+        /// while right edge's location stays constant)</param>
         public void Resize( int numRows, int numColumns, WidgetContainerResizeJustify justify )
         {
             Resize( new MatrixSize( numRows, numColumns ), justify );
         }
 
+        /// <summary>
+        /// Resizes the container to the specified size
+        /// </summary>
+        /// <param name="newSize">New size to which the container is to be resized</param>
+        /// <param name="justify">Resize justification, which indicates the edge at which widgets are to
+        /// remain in their current positions (i.e. right justification will make the left edge move left/right
+        /// while right edge's location stays constant)</param>
         public void Resize( MatrixSize newSize, WidgetContainerResizeJustify justify )
         {
             if( newSize.RowCount > 256 || newSize.ColumnCount > 256 )
@@ -158,6 +243,11 @@ namespace Droppy.Data
             Validate();
         }
 
+        /// <summary>
+        /// Removes specified widget from the container.
+        /// </summary>
+        /// <param name="widget">Widget to be removed. If the widget isn't in the current container, no action
+        /// will take place</param>
         public void Remove( WidgetData widget )
         {
             if( widget.Parent == this )
@@ -176,6 +266,7 @@ namespace Droppy.Data
             Validate();
         }
 
+        /// <inheritdoc/>
         public override void ClearDirtyFlag( bool includeChildren )
         {
             base.ClearDirtyFlag( includeChildren );
@@ -189,6 +280,7 @@ namespace Droppy.Data
             }
         }
 
+        /// <inheritdoc/>
         public override void PostDeserialize()
         {
             var widgetArraySize = _widgetArray.Size;
@@ -224,6 +316,10 @@ namespace Droppy.Data
             } );
         }
 
+        /// <summary>
+        /// Validation function used for debugging. It ensures that each control returns its own location which
+        /// matches its position in the container array.
+        /// </summary>
         public void Validate()
         {
             IterateChildren( ( loc, widget ) =>
@@ -233,6 +329,15 @@ namespace Droppy.Data
             } );
         }
 
+        #endregion
+
+        #region ----------------------- Protected Members ---------------------
+
+        /// <summary>
+        /// This method is invoked whenever a widget is added
+        /// </summary>
+        /// <param name="location">Location where new widget was added</param>
+        /// <param name="widget">Reference to a widget that was added</param>
         protected virtual void OnWidgetAdded( MatrixLoc location, WidgetData widget )
         {
             if( _containerChangedEvent != null )
@@ -242,6 +347,12 @@ namespace Droppy.Data
             }
         }
 
+        /// <summary>
+        /// This method is invoked whenever a widget is replaced
+        /// </summary>
+        /// <param name="location">Location where a widget was replaced</param>
+        /// <param name="oldWidget">Reference to an old widget that was replaced</param>
+        /// <param name="newWidget">Reference to a new widget that is being inserted</param>
         protected virtual void OnWidgetReplaced( MatrixLoc location, WidgetData oldWidget, WidgetData newWidget )
         {
             if( _containerChangedEvent != null )
@@ -251,6 +362,11 @@ namespace Droppy.Data
             }
         }
 
+        /// <summary>
+        /// This method is invoked whenever a widget is removed
+        /// </summary>
+        /// <param name="location">Location where a widget is being removed</param>
+        /// <param name="widget">Reference to a widget that was removed</param>
         protected virtual void OnWidgetRemoved( MatrixLoc location, WidgetData widget )
         {
             if( _containerChangedEvent != null )
@@ -260,6 +376,9 @@ namespace Droppy.Data
             }
         }
 
+        /// <summary>
+        /// This method is invoked whenever a widget container is resized
+        /// </summary>
         protected virtual void OnContainerResized()
         {
             if( _containerResizedEvent != null )
@@ -268,6 +387,7 @@ namespace Droppy.Data
             }
         }
 
+        /// <inheritdoc/>
         protected override void SerializeToXml( XmlWriter writer )
         {
             bool    bChildrenWritten = false;
@@ -296,6 +416,7 @@ namespace Droppy.Data
             }
         }
 
+        /// <inheritdoc/>
         protected override void DeserializeFromXml( XmlReader reader )
         {
             _containerBounds.Row = XmlConvert.ToInt32( reader.GetAttribute( "firstRow" ) );
@@ -344,6 +465,9 @@ namespace Droppy.Data
             }
         }
 
+        #endregion
+
+        #region ----------------------- Private Members -----------------------
 
         private WidgetData ClearWidget( MatrixLoc loc )
         {
@@ -454,5 +578,7 @@ namespace Droppy.Data
 
         [NonSerialized]
         private EventHandler                        _containerResizedEvent;
+
+        #endregion
     }
 }

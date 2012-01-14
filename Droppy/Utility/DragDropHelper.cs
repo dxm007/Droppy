@@ -24,7 +24,7 @@ using System.Windows.Media;
 
 namespace Droppy
 {
-    public class QueryDragDataEventArgs : EventArgs
+    class QueryDragDataEventArgs : EventArgs
     {
         public QueryDragDataEventArgs( Point draggableOffset )
         {
@@ -40,7 +40,7 @@ namespace Droppy
     }
 
 
-    public class DragHelperEventArgs : EventArgs
+    class DragHelperEventArgs : EventArgs
     {
         public DragHelperEventArgs( FrameworkElement source, IDataObject data, DragDropEffects effects )
         {
@@ -284,7 +284,7 @@ namespace Droppy
     }
 
 
-    public class DragHelper
+    class DragHelper
     {
         public DragHelper( FrameworkElement dragSource )
         {
@@ -432,7 +432,7 @@ namespace Droppy
     }
 
 
-    public class DragDropAdorner : Adorner
+    class DragDropAdorner : Adorner
     {
         public DragDropAdorner( FrameworkElement adornedElement, Point offset ) : base( adornedElement )
         {
@@ -473,8 +473,10 @@ namespace Droppy
             AdornedElement.Visibility = Visibility.Visible;
         }
 
+        /// <inheritdoc/>
         protected override int VisualChildrenCount { get { return 1; } }
 
+        /// <inheritdoc/>
         protected override Visual GetVisualChild( int index )
         {
             if( index != 0 ) throw new ArgumentOutOfRangeException();

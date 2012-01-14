@@ -21,7 +21,7 @@ using System.Windows.Input;
 
 namespace Droppy
 {
-    public class WindowMoverEventArgs : EventArgs
+    class WindowMoverEventArgs : EventArgs
     {
         public WindowMoverEventArgs()
         {
@@ -36,7 +36,7 @@ namespace Droppy
         private bool    _isMoveCancelled;
     }
 
-    public class WindowMoverMovingEventArgs : WindowMoverEventArgs
+    class WindowMoverMovingEventArgs : WindowMoverEventArgs
     {
         public WindowMoverMovingEventArgs( Point newPosition )
         {
@@ -52,7 +52,7 @@ namespace Droppy
         private Point   _newPosition;
     }
 
-    public interface IWindowMover
+    interface IWindowMover
     {
         event EventHandler< WindowMoverEventArgs > MoveStarted;
 
@@ -61,7 +61,7 @@ namespace Droppy
         event EventHandler< WindowMoverEventArgs > MoveFinished;
     }
 
-    public class WindowMover : IWindowMover
+    class WindowMover : IWindowMover
     {
         public WindowMover( Window wnd )
         {

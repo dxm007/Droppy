@@ -31,7 +31,7 @@ namespace Droppy
 {
     /// <summary>
     /// </summary>
-    public class FolderWidgetControl : WidgetControl
+    class FolderWidgetControl : WidgetControl
     {
         static FolderWidgetControl()
         {
@@ -80,6 +80,7 @@ namespace Droppy
 
         #endregion
 
+        /// <inheritdoc/>
         public override void OnApplyTemplate()
         {
             base.OnApplyTemplate();
@@ -92,6 +93,7 @@ namespace Droppy
                                               ( o, e ) => IsLabelEditPopupOpen = true ) );
         }
 
+        /// <inheritdoc/>
         protected override void OnClick( object sender, RoutedEventArgs e )
         {
             Data.FolderWidgetData data = DataContext as Data.FolderWidgetData;

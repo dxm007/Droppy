@@ -18,7 +18,7 @@ using System.Windows.Controls;
 
 namespace Droppy
 {
-    public static class GeneralHelperExtensions
+    static class GeneralHelperExtensions
     {
         public static bool HasFlag<T>( this Enum obj, T value )
         {
@@ -26,7 +26,7 @@ namespace Droppy
         }
     }
 
-    public static class WpfHelperExtensions
+    static class WpfHelperExtensions
     {
         public static double Width( this Thickness obj ) { return obj.Left + obj.Right; }
         public static double Height( this Thickness obj ) { return obj.Top + obj.Bottom; }
@@ -42,7 +42,7 @@ namespace Droppy
         }
     }
 
-    public class Win32Window : System.Windows.Forms.IWin32Window
+    class Win32Window : System.Windows.Forms.IWin32Window
     {
         public Win32Window( DependencyObject dependencyObject )
             : this( Window.GetWindow( dependencyObject ) )
@@ -59,7 +59,7 @@ namespace Droppy
         private IntPtr      _handle;
     }
 
-    public class ControlInitHelper
+    class ControlInitHelper
     {
         public ControlInitHelper( Control control )
         {

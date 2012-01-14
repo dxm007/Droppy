@@ -18,7 +18,7 @@ using System.Runtime.InteropServices;
 namespace Droppy {
 
 
-    public static partial class Win32
+    static partial class Win32
     {
         #region ------------------ user32.dll ----------------------------------
 
