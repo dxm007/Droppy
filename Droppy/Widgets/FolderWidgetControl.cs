@@ -30,20 +30,24 @@ using System.Windows.Shapes;
 namespace Droppy
 {
     /// <summary>
+    /// This control is loaded into a widget site to server as a UI representation of
+    /// FolderWidgetData data item.
     /// </summary>
     class FolderWidgetControl : WidgetControl
     {
-        static FolderWidgetControl()
-        {
-            DefaultStyleKeyProperty.OverrideMetadata( typeof( FolderWidgetControl ), new FrameworkPropertyMetadata( typeof( FolderWidgetControl ) ) );
-        }
+        #region ----------------------- Public Members ------------------------
 
+        /// <summary>
+        /// Default constructor
+        /// </summary>
         public FolderWidgetControl()
         {
             new FileDropHelper( this, true ).FileDrop += OnFileDrop;
 
             ContextMenuOpening += OnContextMenuOpening;
         }
+
+        #region - - - - - - - Properties  - - - - - - - - - - - - - - - - - - -
 
         #region - - - - - - - - IsPasteEnabled (read-only) Dependency Property - - - - - - - - - -
 
@@ -80,6 +84,8 @@ namespace Droppy
 
         #endregion
 
+        #endregion
+
         /// <inheritdoc/>
         public override void OnApplyTemplate()
         {
@@ -93,6 +99,10 @@ namespace Droppy
                                               ( o, e ) => IsLabelEditPopupOpen = true ) );
         }
 
+        #endregion
+
+        #region ----------------------- Protected Members ---------------------
+
         /// <inheritdoc/>
         protected override void OnClick( object sender, RoutedEventArgs e )
         {
@@ -102,6 +112,15 @@ namespace Droppy
             {
                 Process.Start( "explorer.exe", "\"" + data.Path + "\"" );
             }
+        }
+
+        #endregion
+
+        #region ----------------------- Private Members -----------------------
+
+        static FolderWidgetControl()
+        {
+            DefaultStyleKeyProperty.OverrideMetadata( typeof( FolderWidgetControl ), new FrameworkPropertyMetadata( typeof( FolderWidgetControl ) ) );
         }
 
         private void OnFileDrop( object sender, FileDropEventArgs e )
@@ -150,5 +169,7 @@ namespace Droppy
             RaiseEvent( new RoutedEventArgs( IsLabelEditPopupOpen ? WidgetSiteControl.UndraggableEvent :
                                                                     WidgetSiteControl.DraggableEvent     ) );
         }
+
+        #endregion
     }
 }

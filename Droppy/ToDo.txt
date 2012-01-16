@@ -1,7 +1,4 @@
 - add about dialog
-- Spend some time cleaning up code, maybe a little refactoring, definitely add a whole bunch of
-  comments to a whole bunch of places
-- Cleanup project files and folders.  Also put resources in the right places
 - Add ability to msbuild script to set product version
 	- Droppy.nsi must be updated (or maybe PRODUCT_VERSION string should be taken out into a
 	  a separate file
@@ -11,8 +8,19 @@
 		http://msbuildtasks.tigris.org/
 		
 ----------------------------------------------------------------------------------------------
+- move a ton of useful utility code (i.e. DragDropHelper, FileDropHelper, Win32 Interop...) out of
+  droppy and place it into it's own DXM.Utilities hierarchy
 - droppy should check for updates and report if a new version of the app is available
 - droppy should be able to self-upgrade itself.
+- Each folder should have "launch command prompt here" context menu command
+- In addition to launching command prompts, each folder should also support visual studio
+  command prompts.
+- User should be able to navigate down into sub-folders from any folder button by simply clicking,
+  or hovering, over a little arrow control which should be placed near the right edge.
+	- This will allow placing root folder into Droppy and being able to quickly navigate to all
+	  subfolders
+- User should be able to select/configure which subfolders will show up when a folder is expanded
+  and also how to treat folders which may be created in the future.
 - When resolution changes while the window is docked, it might end up being docked in the
   middle of the screen. Undocking and redocking it back fixes the placement.
 - disabled menu items are a bit too difficult to see.  Can their visibility be improved
@@ -42,6 +50,9 @@
 
 
 Completed:
+- Spend some time cleaning up code, maybe a little refactoring, definitely add a whole bunch of
+  comments to a whole bunch of places
+- Cleanup project files and folders.  Also put resources in the right places
 - Produce a full build project that will create redistributable package.
 - Produce NSIS installation project:
 	- "MainWindow" title will have to be changed to "Droppy"

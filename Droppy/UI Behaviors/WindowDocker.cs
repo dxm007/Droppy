@@ -21,6 +21,9 @@ using System.Windows.Input;
 
 namespace Droppy
 {
+    /// <summary>
+    /// Indicates the state of a dockable window
+    /// </summary>
     enum DockState
     {
         Floating,
@@ -30,16 +33,31 @@ namespace Droppy
         BottomDock
     }
 
+
+    /// <summary>
+    /// Event data object for state change event of a window docker behavior
+    /// </summary>
     class DockStateChangedEventArgs : EventArgs
     {
+        /// <summary>
+        /// Initializing constructor
+        /// </summary>
+        /// <param name="oldState">Previous state of the dockable window</param>
+        /// <param name="newState">New state of the dockable window</param>
         public DockStateChangedEventArgs( DockState oldState, DockState newState )
         {
             _oldState = oldState;
             _newState = newState;
         }
 
+        /// <summary>
+        /// Gets the previous state of the dockable window
+        /// </summary>
         public DockState OldState { get { return _oldState; } }
 
+        /// <summary>
+        /// Gets the new state of the dockable window
+        /// </summary>
         public DockState NewState { get { return _newState; } }
 
         private DockState   _oldState;
@@ -47,6 +65,9 @@ namespace Droppy
     }
 
 
+    /// <summary>
+    /// Implemented by a window docker behavior object
+    /// </summary>
     interface IWindowDocker
     {
         DockState State { get; }
@@ -55,8 +76,25 @@ namespace Droppy
     }
 
 
+    /// <summary>
+    /// Implements desktop docking behavior which can be attached to any window
+    /// </summary>
+    /// <remark>
+    /// This class works in collaboration with window mover behavior which is used to
+    /// report the position of the window as it is being moved.  The window docker monitors
+    /// window position and when one of the edges comes close enough to a dockable edge, the
+    /// docker snaps window position so appears attached to that edge
+    /// </remark>
     class WindowDocker : IWindowDocker
     {
+        #region ----------------------- Public Members ------------------------
+
+        /// <summary>
+        /// Initializing constructor
+        /// </summary>
+        /// <param name="parent">Reference to the parent window which is to dockable</param>
+        /// <param name="windowMover">Window mover interface which is to be used for reporting
+        /// and adjusting window position</param>
         public WindowDocker( Window parent, IWindowMover windowMover )
         {
             _parent = parent;
@@ -68,10 +106,23 @@ namespace Droppy
             SetupEventSubscriptions();
         }
 
+        #region - - - - - - - IWindowDocker Interface - - - - - - - - - - - - -
+
         public DockState State { get { return _currentState; } }
 
         public event EventHandler< DockStateChangedEventArgs >  StateChanged;
 
+        #endregion
+        #endregion
+
+        #region ----------------------- Protected Members ---------------------
+
+        /// <summary>
+        /// This method gets invoked when window dock state is about to be changed.
+        /// At the time of this call, State property still indicates the previous state
+        /// while the new state is passed in as a parameter
+        /// </summary>
+        /// <param name="newState">New dock state of the window</param>
         protected virtual void OnStateChanged( DockState newState )
         {
             DockState oldState = _currentState;
@@ -85,6 +136,10 @@ namespace Droppy
                 StateChanged( this, new DockStateChangedEventArgs( oldState, newState ) );
             }
         }
+
+        #endregion
+
+        #region ----------------------- Private Members -----------------------
 
         private void UpdateState( DockState state )
         {
@@ -277,6 +332,8 @@ namespace Droppy
         private MonitorInfo         _currentMonitor;
         private DockState           _currentState;
 
-        private const double    _snapDistance = 10.0;
+        private const double        _snapDistance = 10.0;
+
+        #endregion
     }
 }

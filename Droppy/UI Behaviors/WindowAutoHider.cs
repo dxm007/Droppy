@@ -23,6 +23,9 @@ using System.Windows.Threading;
 
 namespace Droppy
 {
+    /// <summary>
+    /// Specifies the mode of the auto-hide behavior
+    /// </summary>
     enum AutoHideMode
     {
         None,
@@ -33,8 +36,16 @@ namespace Droppy
     }
 
 
+    /// <summary>
+    /// Extension methods for AutoHideMode enumeration type
+    /// </summary>
     static class AutoHideModeExtensionsMethods
     {
+        /// <summary>
+        /// Tests if the auto collapse mode is horizontal
+        /// </summary>
+        /// <param name="mode">Auto-hide mode to test</param>
+        /// <returns>True of auto-hide mode is either collapse left or collapse right</returns>
         public static bool IsHorizontalCollapse( this AutoHideMode mode )
         {
             return mode == AutoHideMode.CollapseLeft || mode == AutoHideMode.CollapseRight;
@@ -42,6 +53,10 @@ namespace Droppy
     }
 
 
+    /// <summary>
+    /// Specifies the current state of the window that uses auto-hide
+    /// window behavior
+    /// </summary>
     enum AutoHideState
     {
         Visible,
@@ -51,50 +66,103 @@ namespace Droppy
     }
 
 
+    /// <summary>
+    /// Implemented by auto-hide window behavior object
+    /// </summary>
     interface IWindowAutoHider
     {
+        /// <summary>
+        /// Gets/sets auto-hide mode
+        /// </summary>
         AutoHideMode Mode { get; set; }
 
+        /// <summary>
+        /// Gets the current auto-hide state
+        /// </summary>
         AutoHideState State { get; }
 
+        /// <summary>
+        /// Disables auto-hide behavior until Unfreeze() is called
+        /// </summary>
         void Freeze();
 
+        /// <summary>
+        /// Restores auto-hide behavior. This method must be called as
+        /// many times as Freeze() was called for auto-hide behavior to become
+        /// enabled
+        /// </summary>
         void Unfreeze();
 
+        /// <summary>
+        /// If the window is currently in a hidden state, calling this method will
+        /// force it to transition to a visible state.
+        /// </summary>
         void ShowWindow();
     }
 
 
+    /// <summary>
+    /// WindowAutoHider parameter class. This class is used to pass in a set of
+    /// parameters during the initialization
+    /// </summary>
     class WindowAutoHiderParams
     {
+        /// <summary>
+        /// Default constructor
+        /// </summary>
         public WindowAutoHiderParams()
         {
             this.CollapsedHeight = 5.0;
             this.CollapsedWidth = 5.0;
             this.AutoHideTimeout = TimeSpan.FromSeconds( 1 );
-            
-            _openCloseSpeed = TimeSpan.FromSeconds( 0.2 );
+            this.OpenCloseSpeed = TimeSpan.FromSeconds( 0.2 );
         }
 
+        /// <summary>
+        /// Gets/sets the width of the parent window in the collapsed state
+        /// </summary>
         public double CollapsedWidth { get; set; }
 
+        /// <summary>
+        /// Gets/sets the height of the parent window in the collapsed state
+        /// </summary>
         public double CollapsedHeight { get; set; }
 
+        /// <summary>
+        /// Gets/sets the time interval the window will remain visible after becoming
+        /// inactive. When that time expires, auto-hider will collapse the window
+        /// </summary>
         public TimeSpan AutoHideTimeout { get; set; }
 
-        public TimeSpan OpenCloseSpeed { get { return _openCloseSpeed; } }
-
-        private TimeSpan    _openCloseSpeed;
+        /// <summary>
+        /// Gets/sets the time interval the transition from visible to collapsed and
+        /// vice-a-versa will take.
+        /// </summary>
+        public TimeSpan OpenCloseSpeed { get; set; }
     }
 
 
+    /// <summary>
+    /// Defines auto-hide window behavior
+    /// </summary>
     class WindowAutoHider : IWindowAutoHider
     {
+        #region ----------------------- Public Members ------------------------
+
+        /// <summary>
+        /// Initializing constructor
+        /// </summary>
+        /// <param name="parent">Reference to the parent window</param>
         public WindowAutoHider( Window parent )
                 : this( parent, new WindowAutoHiderParams() )
         {
         }
 
+        /// <summary>
+        /// Initializing constructor
+        /// </summary>
+        /// <param name="parent">Reference to the parent window</param>
+        /// <param name="parameters">Auto-hider configuration settings</param>
         public WindowAutoHider( Window parent, WindowAutoHiderParams parameters )
         {
             _parent = parent;
@@ -110,6 +178,8 @@ namespace Droppy
             parent.Left = parent.Left;
             parent.Top = parent.Top;
         }
+
+        #region - - - - - - - IWindowAutoHider Interface  - - - - - - - - - - -
 
         public AutoHideMode Mode
         {
@@ -147,6 +217,11 @@ namespace Droppy
         {
             ExpandParentWindow();
         }
+
+        #endregion
+        #endregion
+
+        #region ----------------------- Private Members -----------------------
 
         private void OnModeUpdated( AutoHideMode previousMode )
         {
@@ -363,5 +438,7 @@ namespace Droppy
         private int                     _freezeCount;
         private int                     _dragCount;
         private DropHelper              _dropHelper;
+
+        #endregion
     }
 }

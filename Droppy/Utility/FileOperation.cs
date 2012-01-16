@@ -24,14 +24,39 @@ using System.Windows.Interop;
 
 namespace Droppy
 {
+    /// <summary>
+    /// Part of IFileOperation, indicates which file operation to perform. See MSDN's
+    /// documentation of SHFILEOPSTRUCT structure for detailed explanation of these flag values.
+    /// </summary>
     enum FILEOP_CODES : uint
     {
+        /// <summary>
+        /// Move files specified in 'From' field of IFileOperation to 'To'
+        /// </summary>
         FO_MOVE     = 0x0001,
+
+        /// <summary>
+        /// Copies files specified in 'From' field of IFileOperation to 'To'
+        /// </summary>
         FO_COPY     = 0x0002,
+
+        /// <summary>
+        /// Deletes files specified in 'From' field of IFileOperation
+        /// </summary>
         FO_DELETE   = 0x0003,
+
+        /// <summary>
+        /// Renames the file specified in 'From' field of IFileOperation. This flag cannot be used
+        /// to rename multiple files in a single IFileOperation call. Use FO_MOVE instead.
+        /// </summary>
         FO_RENAME   = 0x0004,
     }
 
+
+    /// <summary>
+    /// Flags that control the behavior of IFileOperation object. See MSDN's documentation of
+    /// SHFILEOPSTRUCT structure for detailed explanation of these flag values.
+    /// </summary>
     [Flags]
     enum FILEOP_FLAGS
     {
@@ -69,27 +94,82 @@ namespace Droppy
 
     }
 
+
+    /// <summary>
+    /// Implemented by an object which supports Windows shell file operation.
+    /// </summary>
     interface IFileOperation
     {
+        /// <summary>
+        /// Ges/sets parent window for the file operation dialog if one is to be displayed
+        /// </summary>
         Window ParentWindow { get; set; }
+
+        /// <summary>
+        /// Gets/sets a flag which indicates which operation to perform
+        /// </summary>
         FILEOP_CODES Operation { get; set; }
+
+        /// <summary>
+        /// Gets/sets flags which control the behavior of the file operation
+        /// </summary>
         FILEOP_FLAGS Flags { get; set; }
+
+        /// <summary>
+        /// Gets/sets a list of files to move, copy or delete. Wildcard characters are allowed
+        /// in the file portion of each path.
+        /// </summary>
         string[] From { get; set; }
+
+        /// <summary>
+        /// Gets/sets a list of destination directories.  Multiple directories can be specified
+        /// if FOF_MULTIDESTFILES flag is passed in.
+        /// </summary>
         string[] To { get; set; }
+
+        /// <summary>
+        /// After file operation completes, this member is set to true if a file operation was
+        /// aborted by the user.
+        /// </summary>
         bool AnyOpAborted { get; }
+
+        /// <summary>
+        /// This property is not currently supported. DO NOT USE IT.
+        /// </summary>
         Dictionary< string, string >[] NameMappings { get; }
+
+        /// <summary>
+        /// Gets/sets a title of a progress dialog box. This property is only used if
+        /// FOF_SIMPLEPROGRESS flag is specified
+        /// </summary>
         string ProgressTitle { get; set; }
 
+        /// <summary>
+        /// Called to invoke file operation after other properties of this interface have been
+        /// filled in.
+        /// </summary>
         void Execute();
     }
 
 
+    /// <summary>
+    /// Implements Windows Shell file operation using first generation of file operation method.
+    /// For more information about capabilities and use of this class, see MSDN Library's
+    /// documentation of SHFileOperation functions.
+    /// </summary>
     class FileOperationG1 : IFileOperation
     {
+        #region ----------------------- Public Members ------------------------
+
+        /// <summary>
+        /// Default constructor
+        /// </summary>
         public FileOperationG1()
         {
             _isAnyOpAborted = false;
         }
+
+        #region - - - - - - - IFileOperation Interface  - - - - - - - - - - - -
 
         public Window ParentWindow { get; set; }
         public FILEOP_CODES Operation { get; set; }
@@ -122,6 +202,10 @@ namespace Droppy
             int res = SHFileOperation( ref fileOp );
         }
 
+        #endregion
+        #endregion
+
+        #region ----------------------- Private Members -----------------------
 
         private string ArrayToMultiString( string[] strings )
         {
@@ -135,7 +219,7 @@ namespace Droppy
             return sb.ToString();
         }
 
-        #region --------------------------------- Shell API Declarations ----------------------
+        #region - - - - - - - Shell API Interop - - - - - - - - - - - - - - - -
 
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
         private struct SHFILEOPSTRUCT
@@ -157,12 +241,13 @@ namespace Droppy
             public String           lpszProgressTitle;
         }
 
-
         [DllImport("Shell32.dll", CharSet = CharSet.Unicode)]
         private static extern Int32 SHFileOperation( ref SHFILEOPSTRUCT lpFileOp );
 
         #endregion
 
         private bool    _isAnyOpAborted;
+
+        #endregion
     }
 }

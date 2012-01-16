@@ -25,9 +25,19 @@ using System.Windows.Media.Animation;
 
 namespace Droppy
 {
+    /// <summary>
+    /// Window behavior that controls trash can popup which shows up whenever a drag
+    /// operation of a non-empty widget is detected.
+    /// </summary>
     class TrashCanPopupManager
     {
-        public TrashCanPopupManager( MainWindow parent )
+        #region ----------------------- Public Members ------------------------
+
+        /// <summary>
+        /// Initializing constructor
+        /// </summary>
+        /// <param name="parent">Reference to a parent window</param>
+        public TrashCanPopupManager( Window parent )
         {
             _trashCan = parent.FindName( "TrashCanPopup" ) as Popup;
             _trashIcon = parent.FindName( "TrashIconRect" ) as FrameworkElement;
@@ -49,6 +59,10 @@ namespace Droppy
                 _trashIcon.RenderTransformOrigin = new Point( 0.5, 0.9 );
             }
         }
+
+        #endregion
+
+        #region ----------------------- Private Members -----------------------
 
         private void OnTrashCanDragQueryDataValid( object sender, DropHelperEventArgs e )
         {
@@ -133,6 +147,8 @@ namespace Droppy
 
         private Popup               _trashCan;
         private FrameworkElement    _trashIcon;
+
+        #endregion
     }
 
 }

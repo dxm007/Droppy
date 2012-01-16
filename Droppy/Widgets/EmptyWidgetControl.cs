@@ -29,23 +29,42 @@ using System.Windows.Shapes;
 
 namespace Droppy
 {
+    /// <summary>
+    /// To be implemented by any window that has auto-hiding behavior and wishes to support the ability
+    /// to temporarily freeze/unfreeze that behavior.
+    /// </summary>
     interface IFreezableAutoHideWindow
     {
+        /// <summary>
+        /// Invoked to temporarily freeze the auto-hide behavior
+        /// </summary>
         void FreezeAutoHide();
 
+        /// <summary>
+        /// Undoes the effects of FreezeAutoHide() call. This method must be called same number of times
+        /// as the FreezeAutoHide() method
+        /// </summary>
         void UnfreezeAutoHide();
     }
 
 
     /// <summary>
+    /// This control is loaded into a widget site whenever a corresponding site cell does not have any 
+    /// widget data behind it.
     /// </summary>
+    /// <remarks>
+    /// This control presents the UI which allows the user to select the type of widget that should be 
+    /// added to its widget site. Upon successful selection, this control modifies underlying widget 
+    /// container and that in turn causes this control to be unloaded and a different one to be loaded 
+    /// in its place.
+    /// </remarks>
     class EmptyWidgetControl : WidgetControl
     {
-        static EmptyWidgetControl()
-        {
-            DefaultStyleKeyProperty.OverrideMetadata( typeof( EmptyWidgetControl ), new FrameworkPropertyMetadata( typeof( EmptyWidgetControl ) ) );
-        }
+        #region ----------------------- Public Members ------------------------
 
+        /// <summary>
+        /// Default constructor
+        /// </summary>
         public EmptyWidgetControl()
         {
             new FileDropHelper( this, false ).FileDrop += OnDrop;
@@ -56,6 +75,10 @@ namespace Droppy
         {
             base.OnApplyTemplate();
         }
+
+        #endregion
+
+        #region ----------------------- Protected Members ---------------------
 
         /// <inheritdoc/>
         protected override void OnClick( object sender, RoutedEventArgs e )
@@ -83,6 +106,15 @@ namespace Droppy
             }
         }
 
+        #endregion
+
+        #region ----------------------- Private Members -----------------------
+
+        static EmptyWidgetControl()
+        {
+            DefaultStyleKeyProperty.OverrideMetadata( typeof( EmptyWidgetControl ), new FrameworkPropertyMetadata( typeof( EmptyWidgetControl ) ) );
+        }
+
         private void OnDrop( object sender, FileDropEventArgs e )
         {
             var fileInfo = new FileInfo( e.Files[0] );
@@ -94,83 +126,8 @@ namespace Droppy
                 Site.SetWidget( new Data.FolderWidgetData() { Path = e.Files[0] } );
             }
         }
+
+        #endregion
     }
 
-
-
-
-
-
-
-
-    class FileDropEventArgs : EventArgs
-    {
-        public FileDropEventArgs( FrameworkElement source, bool isMove, string[] files ) : base()
-        {
-            _source = source;
-            _fileList = files;
-            _isMove = isMove;
-        }
-
-        public string[] Files { get { return _fileList; } }
-
-        public bool IsMove { get { return _isMove; } }
-
-        public FrameworkElement Source { get { return _source; } }
-
-        private FrameworkElement    _source;
-        private string[]            _fileList;
-        private bool                _isMove;
-    }
-
-    class FileDropHelper : DropHelper
-    {
-        public FileDropHelper( FrameworkElement parent, bool allowMultiple )
-                    : base( parent )
-        {
-            _allowMultipleFiles = allowMultiple;
-        }
-
-        public event EventHandler< FileDropEventArgs >  FileDrop;
-
-        /// <inheritdoc/>
-        protected override void OnTargetDrop( object sender, DragEventArgs e )
-        {
-            string[] files = e.Data.GetData( "FileDrop" ) as string[];
-
-            if( files == null ) return;
-
-            if( FileDrop != null & files.Length > 0 )
-            {
-                FileDrop( this, new FileDropEventArgs( (FrameworkElement)Target, IsMove( e ), files ) );
-            }
-
-            base.OnTargetDrop( sender, e );
-        }
-
-        /// <inheritdoc/>
-        protected override void OnQueryDragDataValid( object sender, DragEventArgs eventData )
-        {
-            string[] files = eventData.Data.GetData( "FileDrop" ) as string[];
-
-            eventData.Effects = DragDropEffects.None;
-
-            if( files == null ) return;
-
-            if( _allowMultipleFiles || files.Length == 1 )
-            {
-                eventData.Effects = IsMove( eventData ) ? DragDropEffects.Move : DragDropEffects.Copy ;
-            }
-
-            eventData.Handled = true;
-        }
-
-        private bool IsMove( DragEventArgs e )
-        {
-            return e.KeyStates.HasFlag( DragDropKeyStates.ShiftKey );
-        }
-
-
-        private bool                _allowMultipleFiles;
-    }
 }

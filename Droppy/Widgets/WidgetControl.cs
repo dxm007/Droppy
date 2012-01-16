@@ -29,8 +29,25 @@ using System.Windows.Shapes;
 
 namespace Droppy
 {
+    /// <summary>
+    /// Base class for a control which is to be loaded into the widget site to present a UI for 
+    /// one of WidgetData-derived classes from Droppy.Data namespace
+    /// </summary>
     abstract class WidgetControl : Control
     {
+        #region ----------------------- Public Members ------------------------
+
+        /// <summary>
+        /// Default constructor
+        /// </summary>
+        public WidgetControl()
+        {
+            AddHandler( Button.ClickEvent, new RoutedEventHandler( OnClick ) );
+        }
+
+        /// <summary>
+        /// Gets a reference to the parent widget site control
+        /// </summary>
         public WidgetSiteControl Site
         {
             get
@@ -41,12 +58,22 @@ namespace Droppy
             }
         }
 
-        public WidgetControl()
-        {
-            AddHandler( Button.ClickEvent, new RoutedEventHandler( OnClick ) );
-        }
+        #endregion
 
+        #region ----------------------- Protected Members ---------------------
+
+        /// <summary>
+        /// Gets invoked when a mouse click is detected in the widget.
+        /// </summary>
+        /// <param name="sender">Sender of the original button click event</param>
+        /// <param name="e">Data object of the original button click event</param>
+        /// <remarks> Since all widgets are essentially buttons which are designed to be clickable,
+        /// this is just a small optimization that moved few lines of code into a base class</remarks>
         protected abstract void OnClick( object sender, RoutedEventArgs e );
+
+        #endregion
+
+        #region ----------------------- Private Members -----------------------
 
         private void FindParent()
         {
@@ -63,5 +90,7 @@ namespace Droppy
         }
 
         private WidgetSiteControl _parentSite;
+
+        #endregion
     }
 }

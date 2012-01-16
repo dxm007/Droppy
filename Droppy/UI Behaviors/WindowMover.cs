@@ -21,12 +21,22 @@ using System.Windows.Input;
 
 namespace Droppy
 {
+    /// <summary>
+    /// Defines an event data object for window mover events
+    /// </summary>
     class WindowMoverEventArgs : EventArgs
     {
+        /// <summary>
+        /// Default constructor
+        /// </summary>
         public WindowMoverEventArgs()
         {
         }
 
+        /// <summary>
+        /// Gets/sets a flag that indicates whether to cancel window move operation. This
+        /// property allows any event listener to elect to cancel the move operation
+        /// </summary>
         public bool IsMoveCancelled
         {
             get { return _isMoveCancelled; }
@@ -36,13 +46,30 @@ namespace Droppy
         private bool    _isMoveCancelled;
     }
 
+
+    /// <summary>
+    /// Defines an event data for window mover object's Moving event
+    /// </summary>
     class WindowMoverMovingEventArgs : WindowMoverEventArgs
     {
+        /// <summary>
+        /// Initializing constructor
+        /// </summary>
+        /// <param name="newPosition">New location of the window</param>
         public WindowMoverMovingEventArgs( Point newPosition )
         {
             _newPosition = newPosition;
         }
 
+        /// <summary>
+        /// Gets/sets the location the window is about to be moved to. 
+        /// </summary>
+        /// <remarks>
+        /// This event is fired before window location is updated. A listener listening for
+        /// Moving event has an option to cancelling the move, in which case this new location
+        /// will be ignored. A listener can also modify this property and the window mover will
+        /// move the window correspondingly.
+        /// </remarks>
         public Point NewPosition
         {
             get { return _newPosition; }
@@ -52,17 +79,41 @@ namespace Droppy
         private Point   _newPosition;
     }
 
+
+    /// <summary>
+    /// Implemented by a window mover behavior object
+    /// </summary>
     interface IWindowMover
     {
+        /// <summary>
+        /// Gets fired when window move is initiated
+        /// </summary>
         event EventHandler< WindowMoverEventArgs > MoveStarted;
 
+        /// <summary>
+        /// Gets fired while window is being moved. This event reports the next position
+        /// the window will assume after the event is processed
+        /// </summary>
         event EventHandler< WindowMoverMovingEventArgs > Moving;
 
+        /// <summary>
+        /// Gets fired when window move is terminated
+        /// </summary>
         event EventHandler< WindowMoverEventArgs > MoveFinished;
     }
 
+
+    /// <summary>
+    /// Implements window moving behavior which can be attached to any window
+    /// </summary>
     class WindowMover : IWindowMover
     {
+        #region ----------------------- Public Members ------------------------
+
+        /// <summary>
+        /// Initializing constructor
+        /// </summary>
+        /// <param name="wnd">Reference to a parent window</param>
         public WindowMover( Window wnd )
         {
             _wnd = wnd;
@@ -70,12 +121,25 @@ namespace Droppy
             SetupEventCallbacks();
         }
 
+        #region - - - - - - - IWindowMover Interface  - - - - - - - - - - - - -
+
         public event EventHandler< WindowMoverEventArgs > MoveStarted;
 
         public event EventHandler< WindowMoverMovingEventArgs > Moving;
 
         public event EventHandler< WindowMoverEventArgs > MoveFinished;
 
+        #endregion
+        #endregion
+
+        #region ----------------------- Protected Members ---------------------
+
+        /// <summary>
+        /// Gets invoked when window move is initiated. Deriving class must ensure to call the
+        /// base implementation of this function to ensure correct operation of the window
+        /// mover object.
+        /// </summary>
+        /// <returns></returns>
         protected virtual bool OnMoveStarted()
         {
             if( MoveStarted == null ) return true;
@@ -87,6 +151,14 @@ namespace Droppy
             return !eventArgs.IsMoveCancelled;
         }
 
+        /// <summary>
+        /// Gets invoked while the window is being moved to report new window position and give
+        /// event listeners or deriving classes to cancel the move or adjust the window position.
+        /// Deriving class must ensure to call the base implementation of this function to 
+        /// ensure correct operation of the window mover object
+        /// </summary>
+        /// <param name="newPosition"></param>
+        /// <returns></returns>
         protected virtual bool OnMoving( ref Point newPosition )
         {
             if( Moving == null ) return true;
@@ -100,6 +172,11 @@ namespace Droppy
             return !eventArgs.IsMoveCancelled;
         }
 
+        /// <summary>
+        /// Gets invoked when window move operation is terminated. Deriving class must ensure to
+        /// call the base implementation of this function to ensure correct operation of the 
+        /// window mover object
+        /// </summary>
         protected virtual void OnMoveFinished()
         {
             if( MoveFinished != null )
@@ -107,6 +184,10 @@ namespace Droppy
                 MoveFinished( this, new WindowMoverEventArgs() );
             }
         }
+
+        #endregion
+
+        #region ----------------------- Private Members -----------------------
 
         private void SetupEventCallbacks()
         {
@@ -196,6 +277,8 @@ namespace Droppy
         private Point                   _anchorWindowPosition;
         private bool                    _isMouseDown;
         private bool                    _isMoving;
+
+        #endregion
     }
 
 }

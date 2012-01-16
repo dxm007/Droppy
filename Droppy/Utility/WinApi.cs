@@ -17,7 +17,12 @@ using System.Runtime.InteropServices;
 
 namespace Droppy {
 
-
+    /// <summary>
+    /// This class contains Win32 API declarations used by Droppy. Nothing inside of the class is
+    /// documented because all declarations have a one-to-one mapping with their unmanaged Win32
+    /// API counter parts and all documentation can be found in MSDN Library. The class is organized
+    /// to have mirror layout of MSDN library's online reference.
+    /// </summary>
     static partial class Win32
     {
         #region ------------------ user32.dll ----------------------------------

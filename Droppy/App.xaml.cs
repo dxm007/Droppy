@@ -25,7 +25,7 @@ using System.Windows.Interop;
 namespace Droppy
 {
     /// <summary>
-    /// Interaction logic for App.xaml
+    /// Droppy application class
     /// </summary>
     partial class App : Application
     {
@@ -49,6 +49,9 @@ namespace Droppy
         {
             var mainWindow = new MainWindow();
 
+            // registers a callback to intercept WM_SHOWFIRSTINSTANCE messages so that when a second
+            // instance broadcasts that message, original instance will be able to receive it and respond
+            // by activating itself and making sure it isn't hidden.
             mainWindow.SourceInitialized += ( sender, e ) =>
             {
                 HwndSource source = HwndSource.FromHwnd( new WindowInteropHelper( mainWindow ).Handle );

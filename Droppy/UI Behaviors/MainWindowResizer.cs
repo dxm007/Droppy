@@ -24,8 +24,22 @@ using Droppy.Data;
 
 namespace Droppy
 {
+
+    /// <summary>
+    /// Resize behavior for Droppy's main window
+    /// </summary>
+    /// <remarks>
+    /// For the time being this class works specifically with MainWindow because it directly accesses its
+    /// widget container control, but with a little interface magic we could make it work with any window.
+    /// </remarks>
     class MainWindowResizer
     {
+        #region ----------------------- Public Members ------------------------
+
+        /// <summary>
+        /// Initializing constructor
+        /// </summary>
+        /// <param name="parent">Reference to the parent window</param>
         public MainWindowResizer( MainWindow parent )
         {
             _parent = parent;
@@ -47,6 +61,11 @@ namespace Droppy
             _siteCellSize = CalculateSiteCellSize();
         }
 
+        /// <summary>
+        /// Temporarily turns on auto-sizing of the parent window so that the WPF layout system would
+        /// adjust the size so that the children, including the widget container control fit inside the
+        /// window.  
+        /// </summary>
         public void SizeParentToContent()
         {
             SetAutoSizingOnParent();
@@ -58,6 +77,10 @@ namespace Droppy
 
             SetManualSizingOnParent();
         }
+
+        #endregion
+
+        #region ----------------------- Private Members -----------------------
 
         private void OnResizeStarted( ResizeBarEventArgs e )
         {
@@ -266,5 +289,7 @@ namespace Droppy
         private Size            _currentSize;
         private Size            _minimumSize;
         private Size            _siteCellSize;
+
+        #endregion
     }
 }

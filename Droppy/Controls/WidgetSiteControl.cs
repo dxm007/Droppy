@@ -329,35 +329,61 @@ namespace Droppy
     /// <summary>
     /// Allows WidgetSiteControl controls to become draggable.
     /// </summary>
+    /// <remarks>
+    /// This class extends DragHelper class in order to...
+    ///   1) provide a custom DragData object which indicates which control and what widget 
+    ///      is being dragged
+    ///   2) Override and cancel drag operation if a child within the site decided to temporary
+    ///      freeze site's draggable ability through the use of WidgetSiteControl's Draggable/
+    ///      Undraggable attached routed events.
+    /// </remarks>
     class WidgetSiteDragHelper : DragHelper
     {
+        #region ----------------------- Public Members ------------------------
+
+        /// <summary>
+        /// Initializing constructor
+        /// </summary>
+        /// <param name="parentSite">Reference to the parent site control</param>
         public WidgetSiteDragHelper( WidgetSiteControl parentSite ) : base( parentSite )
         {
             WidgetSiteControl.AddUndraggableHandler( parentSite, OnWidgetUndraggable );
             WidgetSiteControl.AddDraggableHandler( parentSite, OnWidgetDraggable );
         }
 
+        /// <summary>
+        /// Gets a reference to the parent site control
+        /// </summary>
         public WidgetSiteControl Parent { get { return (WidgetSiteControl)DragSource; } }
+
+        #endregion
+
+        #region ----------------------- Protected Members ---------------------
 
         /// <inheritdoc/>
         protected override void OnQueryDragData( QueryDragDataEventArgs e )
         {
+            if( _dragFrozenCount > 0 ) return;
+
             base.OnQueryDragData( e );
 
-            var data = new WidgetSiteDragDropData() { DraggableOffset = e.DraggableOffset,
-                                                      Site = Parent,
-                                                      Widget = (Data.WidgetData)Parent.Content };
+            if( e.DragData == null )
+            {
+                var data = new WidgetSiteDragDropData() {
+                    DraggableOffset = e.DraggableOffset,
+                    Site = Parent,
+                    Widget = (Data.WidgetData)Parent.Content 
+                };
 
-            var dataObject = new DataObject( data ); 
+                var dataObject = new DataObject( data ); 
 
-            e.DragData = dataObject;
+                e.DragData = dataObject;
+            }
         }
 
-        /// <inheritdoc/>
-        protected override bool ValidateDragEventSource( MouseButtonEventArgs e )
-        {
-            return _dragFrozenCount == 0;
-        }
+        #endregion
+
+        #region ----------------------- Private Members -----------------------
 
         private void OnWidgetUndraggable( object sender, RoutedEventArgs e )
         {
@@ -372,5 +398,7 @@ namespace Droppy
         }
 
         private int _dragFrozenCount;
+
+        #endregion
     }
 }
