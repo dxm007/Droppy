@@ -17,8 +17,8 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:Droppy" x:ClassModifier="internal" 
         Title="Droppy" ResizeMode="NoResize" SizeToContent="WidthAndHeight"
-        Icon="/Droppy;component/Resources/AppIcon1.ico"
-        WindowStartupLocation="CenterScreen" WindowStyle="None" Background="Transparent" AllowsTransparency="True">
+        Icon="/Resources/AppIcon1.ico"
+    WindowStartupLocation="CenterScreen" WindowStyle="None" Background="Transparent" AllowsTransparency="True">
     <Window.Resources>
         <Style TargetType="{x:Type ContextMenu}" BasedOn="{StaticResource ContextMenuStyle}"/>
         
@@ -41,7 +41,6 @@
 
                         <Button.ContextMenu>
                             <ContextMenu Name="ToolsMenu" Placement="Bottom">
-                                <!--  Style="{StaticResource ContextMenuStyle}" -->
                                 <MenuItem Header="Export Configuration..." Click="OnExportMenuItemClick">
                                     <MenuItem.Icon>
                                         <Rectangle Fill="{StaticResource ExportIconBrush}" Width="16" Height="16"/>
