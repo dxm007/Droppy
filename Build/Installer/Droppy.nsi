@@ -130,12 +130,9 @@ FunctionEnd
 
 ;--------------------------------------------------------------------
 Section "-Install"
-    LogSet on
-
     SetOutPath "$INSTDIR"
     
-    File "${PROJECT_ROOT_FOLDER}\Droppy\bin\Debug\${APP_EXE_NAME}"
-    File "${PROJECT_ROOT_FOLDER}\LICENSE"
+    File "${PROJECT_ROOT_FOLDER}\bin\Release\*.*"
     
     WriteUninstaller "$INSTDIR\Uninstall.exe"
     

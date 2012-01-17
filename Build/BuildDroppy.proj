@@ -29,7 +29,8 @@
 =============================================================================================== -->
 
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
- 
+  <Import Project="$(MSBuildExtensionsPath)\MSBuildCommunityTasks\MSBuild.Community.Tasks.Targets"/>
+  
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Release</Configuration>
   </PropertyGroup>
@@ -37,10 +38,12 @@
   <PropertyGroup>
     <RootProjectDir>$(MSBuildProjectDirectory)\..</RootProjectDir>
     <RedistDir>$(RootProjectDir)\Redist</RedistDir>
+    <BinDir>$(RootProjectDir)\Bin\$(Configuration)</BinDir>
+    <SymbolsDir>$(RootProjectDir)\Symbols\$(Configuration)</SymbolsDir>
+    <SourceDir>$(RootProjectDir)\Src</SourceDir>
     <InstallerDir>$(RootProjectDir)\Build\Installer</InstallerDir>
-    <installerProjPath>$(InstallerDir)\Droppy.nsi</installerProjPath>
+    <InstallerProjPath>$(InstallerDir)\Droppy.nsi</InstallerProjPath>
   </PropertyGroup>
-
 
   <PropertyGroup>
     <ProgramFiles32>$(MSBuildProgramFiles32)</ProgramFiles32>
@@ -51,36 +54,57 @@
   </PropertyGroup>
     
   <ItemGroup>
-    <ProjectToBuild Include="$(RootProjectDir)\Droppy\Droppy.csproj"/>
+    <ProjectToBuild Include="$(SourceDir)\Droppy.sln"/>
   </ItemGroup>
 
   <ItemGroup>
     <RedistFile Include="$(RedistDir)\*.*"/>
   </ItemGroup>
+
+  <ItemGroup>
+    <BinFile Include="$(BinDir)\*.*"/>
+  </ItemGroup>
+
+  <ItemGroup>
+    <SymbolFile Include="$(SymbolsDir)\*.*"/>
+  </ItemGroup>
+
+  <Target Name="PrepareProjectFolders">
+    <MakeDir Directories="$(RedistDir)"/>
+    <MakeDir Directories="$(BinDir)"/>
+    <MakeDir Directories="$(SymbolsDir)"/>
+  </Target>
   
-  <Target Name="Build">
+  <Target Name="Build" DependsOnTargets="PrepareProjectFolders">
     <MSBuild Projects="@(ProjectToBuild)" Properties="Configuration=$(Configuration)" Targets="Build"/>
-    
-    <CallTarget Condition=" '$(Configuration)' == 'Release' " Targets="Deploy"/>
+
+    <Copy SourceFiles="$(RootProjectDir)\LICENSE" DestinationFolder="$(BinDir)"/>
   </Target>
 
   <Target Name="Clean">
     <MSBuild Projects="@(ProjectToBuild)" Properties="Configuration=$(Configuration)" Targets="Clean"/>
-
-    <CallTarget Condition=" '$(Configuration)' == 'Release' " Targets="CleanRedist"/>
+    <Delete Files="@(BinFile)"/>
+    <Delete Files="@(SymbolFile)"/>
   </Target>
 
   <Target Name="Rebuild" DependsOnTargets="Clean;Build"/>
 
-  <Target Name="Deploy" >
-    <!-- If this command fails, make sure you have installed NSIS (Nullsoft Scriptable Install System) package.
-         If NSIS installed, ensure that $(MakeNsisPath) as defined in above properties points to the installer
-         executable                                                                                             -->
-    <Exec Command="&quot;$(MakeNsisPath)&quot; &quot;$(installerProjPath)&quot;" />
+  <Target Name="Deploy" DependsOnTargets="CleanRedist;Rebuild;MakeInstall;MakeRedistZip" >
   </Target>
 
   <Target Name="CleanRedist">
     <Delete Files="@(RedistFile)"/>
+  </Target>
+
+  <Target Name="MakeInstall">
+    <!-- If this command fails, make sure you have installed NSIS (Nullsoft Scriptable Install System) package.
+         If NSIS installed, ensure that $(MakeNsisPath) as defined in above properties points to the installer
+         executable                                                                                             -->
+    <Exec Command="&quot;$(MakeNsisPath)&quot; &quot;$(InstallerProjPath)&quot;" />
+  </Target>
+
+  <Target Name="MakeRedistZip">
+    <Zip Files="@(BinFile)" WorkingDirectory="$(BinDir)" ZipFileName="$(RedistDir)\Droppy.zip" ZipLevel="9"/>
   </Target>
   
 </Project>
