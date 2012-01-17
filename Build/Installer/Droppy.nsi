@@ -148,6 +148,7 @@ SectionEnd
 Section "Uninstall"
 
     Delete "$INSTDIR\${APP_EXE_NAME}"
+    Delete "$INSTDIR\${APP_EXE_NAME}.Config"
     Delete "$INSTDIR\LICENSE"
     
     Delete "$INSTDIR\Uninstall.exe"
