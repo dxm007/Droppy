@@ -9,18 +9,32 @@
     http://www.opensource.org/licenses/mit-license.php Same text is found in LICENSE file which
     is located in root directory of the project.
     
+    NOTES: This MSBuild script uses MSBuild Community Tasks for certain tasks which are not
+    provided by base MSBuild functionality. These include creation of ZIP files and generation
+    of GlobalAssemblyInfo.cs file for common versioning scheme support.  These tools must be
+    installed prior to running the build. The can be downloaded from:
+    http://msbuildtasks.tigris.org/
     
     = = = = = = = = = = = = = USAGE: = = = = = = = = = = = = =
     
-    msbuild BuildDroppy.proj [/p:Configuration=(Debug|Release)] [/t:(Build|Rebuild|Clean)]
+    msbuild BuildDroppy.proj [/p:Configuration=(Debug|Release)] [/t:(Build|Rebuild|Clean|Deploy)]
+                             [/p:BumpVersion=True]
     
     "/p:Configuration" selects whether to build Debug or Release.  If not specified, default
     configuration is Release.  When building in release mode the script will also generate
     redistributable files.
     
-    "/t:" selects a target which determines whether to incrementally build (Build), perform 
-    a full rebuild (Rebuild) or to only cleanup previous, if any, build output (Clean). If not
-    specified, default is Build.
+    "/t:" selects a target which determines build scripts actions:
+        Build     - Performs incremental build of all projects
+        Rebuild   - Performs full rebuild of all projects
+        Clean     - Cleans intermediate and output files from all projects.
+        Deploy    - Invokes 'Rebuild' target which is followed by packaging of the application
+                    into its redistributable form(s).
+                    
+    "/p:BumpVersion" specifies if build version should automatically be dumped up. This will change
+    the version string in the master version file, Version.txt. NOTE: This only bumps up build versions
+    which occur frequently and possibly, nightly. Version.txt must be manually editted when product
+    major and/or minor versions are bumped up.
     
     For more advanced command line options, see "MSBuild Command Line Reference" page in MSDN 
     Library.
