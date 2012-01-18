@@ -1,11 +1,5 @@
 - add about dialog
-- Add ability to msbuild script to set product version
-	- Droppy.nsi must be updated (or maybe PRODUCT_VERSION string should be taken out into a
-	  a separate file
-	- AssemblyInfo.cs must be updated
-		http://blogs.msdn.com/b/msbuild/archive/2005/11/11/491947.aspx
-		http://code.dblock.org/productbuild-versioning-with-msbuild-ant-and-cruisecontrol
-		http://msbuildtasks.tigris.org/
+
 		
 ----------------------------------------------------------------------------------------------
 - move a ton of useful utility code (i.e. DragDropHelper, FileDropHelper, Win32 Interop...) out of
@@ -50,6 +44,13 @@
 
 
 Completed:
+- Add ability to msbuild script to set product version
+	- Droppy.nsi must be updated (or maybe PRODUCT_VERSION string should be taken out into a
+	  a separate file
+	- AssemblyInfo.cs must be updated
+		http://blogs.msdn.com/b/msbuild/archive/2005/11/11/491947.aspx
+		http://code.dblock.org/productbuild-versioning-with-msbuild-ant-and-cruisecontrol
+		http://msbuildtasks.tigris.org/
 - Spend some time cleaning up code, maybe a little refactoring, definitely add a whole bunch of
   comments to a whole bunch of places
 - Cleanup project files and folders.  Also put resources in the right places
