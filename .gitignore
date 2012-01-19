@@ -1,0 +1,7 @@
+Bin/
+obj/
+Build/GlobalAssemblyInfo.cs
+Build/Installer/Droppy.version.nsh
+/Redist/
+/Symbols/
+
