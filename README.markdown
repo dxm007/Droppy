@@ -1,6 +1,3 @@
-Droppy README File
-==================
-
 What is Droppy?
 ---------------
 Droppy is a very low-overhead Windows desktop utility written for people who often have to open or copy/move files into the same set of folders. Droppy presents a simple drag-and-drop UI which allows a user to select favorite folders, copy files into them or easily open them.
@@ -17,10 +14,12 @@ Droppy was written in C# against .NET Framework v3.5 (it would've been v4.0 if M
 However, the project also contains a one-command build and deployment script which can be used to produce a complete installation (as well as a zip package for people who are paranoid about using installers).
 
 To get the scripted build working you will need the following:
+
 1. [NullSoft Scriptable Install System][2] Installer
 2. [MSBuild Community Tasks][3]
 
 Optional:
+
 1. [XAML Regions Add-On for Visual Studio][4] -- Droppy XAML files use region-style comments to partition themselves into logical parts. This add-on is needed if you want the IDE to interpret those comments as collapsable regions.
 2. [HM NIS Edit][5] -- A free NSIS script editor.
 
@@ -29,7 +28,8 @@ Building and Deploying Droppy
 -----------------------------
 Even if you are planning to do all work from VS IDE, it is recommented to run msbuild script at least once as it will create some project tree directories and perform few other useful things.
 
-To build droppy
+To build droppy:
+
 1. Open Visual Studio 2010 command prompt
 2. *cd* into *Droppy/Build/* directory
 3. Run the build script
